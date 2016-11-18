@@ -1,0 +1,182 @@
+#!/usr/bin/python
+import pyaria2
+import curses, os, sys, time
+
+server = pyaria2.PyAria2('raspberrypi', 6800, None)
+
+class Download:
+    def __init__(self, data):
+        self.data = data
+        self.gid = self.data['gid']
+
+        self.name = os.path.basename(self.data['files'][0]['path'])
+        if self.name == '':
+            self.name = "N/A"
+
+        self.size = int(self.data['totalLength'])
+        self.refresh(True)
+
+    def refresh(self, scope):
+        # if scope == 1 and self.status != 'active':
+            # return
+
+        self.done = int(self.data['completedLength'])
+        self.status = self.data['status']
+
+        if self.size != 0:
+            self.progress = self.done / self.size * 100
+        else:
+            self.progress = 0
+
+        self.dl = int(self.data['downloadSpeed']) / 1024
+
+        if self.dl != 0:
+            eta_s = (self.size - self.done) / (self.dl * 1024)
+            m, s = divmod(eta_s, 60)
+            h, m = divmod(m, 60)
+            self.eta = "%d:%02d:%02d" % (h, m, s)
+        else:
+            self.eta = "N/A"
+
+        return self
+
+
+def main(screen):
+    global dims, s_name
+    dims = screen.getmaxyx()
+
+    screen.clear()
+    curses.start_color()
+    curses.use_default_colors()
+    curses.curs_set(False)
+
+    for i in range(0, curses.COLORS):
+        curses.init_pair(i + 1, i, -1)
+
+    s_name = dims[1] - 68
+    s_size = 12
+    s_status = 11
+    s_progress = 15
+    s_percent = 10
+    s_dl = 11
+    s_eta = 10
+
+
+    def get_downloads():
+        downloads = []
+        active = server.tellActive()
+        waiting = server.tellWaiting(0, 100)
+        stopped = server.tellStopped(-1, 100)
+        states = [active, waiting, stopped]
+
+        for state in states:
+            for i in range(len(state)):
+                downloads.append(Download(state[i]))
+
+        return downloads
+
+
+    def menu():
+        global dims, s_name
+        selection = -1
+        option = 0
+        screen.nodelay(True)
+        downloads = get_downloads()
+
+        def create_item(*args):
+            item = ""
+            for arg in args:
+                item += (arg[0] +  (arg[1] - len(arg[0])) * ' ')
+            return item
+
+        while selection < 0:
+            screen.clear()
+            time.sleep(0.2)
+
+            num = len(downloads)
+            if num == 0:
+                num = 1
+
+            graphics = [0] * num
+            graphics[option] = curses.A_REVERSE
+
+            t_name, t_size, t_status, t_progress, t_percent, t_dl, t_eta = "NAME", "SIZE", "STATUS", "PROGRESS", "", "DL", "ETA"
+            t_string = create_item(
+                                   (t_name, s_name),
+                                   (t_size, s_size),
+                                   (t_status, s_status),
+                                   (t_progress, s_progress),
+                                   (t_percent, s_percent),
+                                   (t_dl, s_dl),
+                                   (t_eta, s_eta)
+                                  )
+
+            curses.init_pair(100, 0, 36)
+            screen.addstr(0, 0, t_string, curses.color_pair(100) | curses.A_BOLD)
+
+            if len(downloads) != 0:
+                for i in range(len(downloads)):
+
+                    i_name = downloads[i].name[:(s_name - 3)]
+                    i_size = str("%0.2f" % (downloads[i].size / 1048576)) + " MB"
+                    i_status = downloads[i].status.replace("active", "active  ")
+                    i_progress = ' ' * (s_progress - 1)
+                    i_percent = str("%0.2f" % downloads[i].progress) + "%"
+                    i_dl = (str("%0.1f" % downloads[i].dl) + " K").replace("0.0 K", "N/A")
+                    i_eta = downloads[i].eta
+
+                    item = create_item(
+                                           (i_name, s_name),
+                                           (i_size, s_size),
+                                           (i_status, s_status),
+                                           (i_progress, s_progress),
+                                           (i_percent, s_percent),
+                                           (i_dl, s_dl),
+                                           (i_eta, s_eta)
+                                          )
+
+                    if i_status == 'waiting':
+                        color = 5
+                    elif i_status == 'complete':
+                        color = 3
+                    elif i_status == 'error':
+                        color = 2
+                    elif i_status == 'paused':
+                        color = 11
+                    else:
+                        color = 16
+
+                    screen.addstr(i + 1, 0, item, graphics[i]|curses.color_pair(color))
+
+                    i_progress = int((downloads[i].progress) / 100 * (s_progress - 1)) * '█'
+                    screen.addstr(i + 1, (s_name + s_size + s_status), i_progress, graphics[i]|curses.color_pair(color))
+
+            screen.refresh()
+            action = screen.getch()
+
+            if action == curses.KEY_RESIZE:
+                dims = screen.getmaxyx()
+                s_name = dims[1] - 68
+            elif action == curses.KEY_UP or action == ord('k'):
+                option = (option - 1) % num
+            elif action == curses.KEY_DOWN or action == ord('j'):
+                option = (option + 1) % num
+            elif action == ord('P'):
+                if len(server.tellActive()) == 0:
+                    server.unpauseAll()
+                else:
+                    server.pauseAll()
+            elif action == ord('b'):
+                screen.addstr(10, 0, str(option))
+                screen.refresh()
+            elif action == ord('q'):
+                break
+
+            downloads = get_downloads()
+
+
+    menu()
+
+
+curses.wrapper(main)
+

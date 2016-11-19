@@ -2,9 +2,23 @@
 import pyaria2
 import curses, os, sys, time
 
-server = pyaria2.PyAria2('raspberrypi', 6800, None)
+HOST = 'raspberrypi'
+PORT = 6800
 
-# server.addUri(['http://ftp.iinet.net.au/pub/archlinux/iso/2016.11.01/archlinux-bootstrap-2016.11.01-x86_64.tar.gz'])
+try:
+    arg_1 = sys.argv[1]
+    arg_2 = sys.argv[2]
+    arg_3 = sys.argv[3]
+except:
+    arg_1 = None
+
+if arg_1 != None:
+    server = pyaria2.PyAria2(arg_1, PORT, None)
+    if arg_2 == '--add':
+        server.addUri([arg_3])
+    sys.exit()
+
+server = pyaria2.PyAria2(HOST, PORT, None)
 
 class Download:
     def __init__(self, data):
@@ -55,8 +69,8 @@ def main(screen):
     for i in range(0, curses.COLORS):
         curses.init_pair(i + 1, i, -1)
 
-    s_name = dims[1] - 69
-    s_size = 12
+    s_name = dims[1] - 70
+    s_size = 13
     s_status = 11
     s_progress = 15
     s_percent = 10
@@ -143,6 +157,8 @@ def main(screen):
                         color = 5
                     elif i_status == 'complete':
                         color = 3
+                    elif i_status == 'removed':
+                        color = 4
                     elif i_status == 'error':
                         color = 2
                     elif i_status == 'paused':
@@ -180,23 +196,26 @@ def main(screen):
                     server.unpause(downloads[option].gid)
 
             elif action == ord('a'):
-                import re
-                import tkinter as tk
-                root = tk.Tk()
-                root.withdraw()
-                url = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', root.clipboard_get())
-                if len(url) != 0:
-                    screen.nodelay(False)
-                    screen.addstr(dims[0] - 1, 0, "add: " + url[0])
-                    response = screen.getch()
-                    if response == ord('\n'):
-                        server.addUri([url[0].strip()])
-                    screen.nodelay(True)
+                screen.nodelay(False)
+                curses.echo(True)
+                screen.addstr(dims[0] - 1, 0, "add: ")
+                url = screen.getstr(dims[0] - 1, 5, 200)
+                try:
+                    server.addUri([url.strip()])
+                except pyaria2.xmlrpc.client.Fault:
+                    screen.addstr(dims[0] - 1, 0, "add: " + url.decode('utf-8'), curses.color_pair(2))
                     screen.refresh()
+                    time.sleep(1)
+                curses.echo(False)
+                screen.nodelay(True)
+                screen.refresh()
 
             elif action == ord('d'):
+                if option == len(downloads) - 1:
+                    option -= 1
                 try:
                     server.remove(downloads[option].gid)
+                    # input()
                 except:
                     server.removeDownloadResult(downloads[option].gid)
 

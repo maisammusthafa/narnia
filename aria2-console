@@ -4,6 +4,8 @@ import curses, os, sys, time
 
 server = pyaria2.PyAria2('raspberrypi', 6800, None)
 
+# server.addUri(['http://ftp.iinet.net.au/pub/archlinux/iso/2016.11.01/archlinux-bootstrap-2016.11.01-x86_64.tar.gz'])
+
 class Download:
     def __init__(self, data):
         self.data = data
@@ -53,7 +55,7 @@ def main(screen):
     for i in range(0, curses.COLORS):
         curses.init_pair(i + 1, i, -1)
 
-    s_name = dims[1] - 68
+    s_name = dims[1] - 69
     s_size = 12
     s_status = 11
     s_progress = 15
@@ -116,6 +118,8 @@ def main(screen):
 
             if len(downloads) != 0:
                 for i in range(len(downloads)):
+                    if i > dims[0] - 3:
+                        break
 
                     i_name = downloads[i].name[:(s_name - 3)]
                     i_size = str("%0.2f" % (downloads[i].size / 1048576)) + " MB"
@@ -157,18 +161,48 @@ def main(screen):
             if action == curses.KEY_RESIZE:
                 dims = screen.getmaxyx()
                 s_name = dims[1] - 68
+
             elif action == curses.KEY_UP or action == ord('k'):
                 option = (option - 1) % num
             elif action == curses.KEY_DOWN or action == ord('j'):
                 option = (option + 1) % num
+
             elif action == ord('P'):
                 if len(server.tellActive()) == 0:
                     server.unpauseAll()
                 else:
                     server.pauseAll()
-            elif action == ord('b'):
-                screen.addstr(10, 0, str(option))
-                screen.refresh()
+
+            elif action == ord('p'):
+                if downloads[option].status == 'active' or downloads[option].status == 'waiting':
+                    server.pause(downloads[option].gid)
+                elif downloads[option].status == 'paused':
+                    server.unpause(downloads[option].gid)
+
+            elif action == ord('a'):
+                import re
+                import tkinter as tk
+                root = tk.Tk()
+                root.withdraw()
+                url = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', root.clipboard_get())
+                if len(url) != 0:
+                    screen.nodelay(False)
+                    screen.addstr(dims[0] - 1, 0, "add: " + url[0])
+                    response = screen.getch()
+                    if response == ord('\n'):
+                        server.addUri([url[0].strip()])
+                    screen.nodelay(True)
+                    screen.refresh()
+
+            elif action == ord('d'):
+                try:
+                    server.remove(downloads[option].gid)
+                except:
+                    server.removeDownloadResult(downloads[option].gid)
+
+            elif action == ord('D'):
+                server.purgeDownloadResult()
+
             elif action == ord('q'):
                 break
 

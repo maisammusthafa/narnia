@@ -1,18 +1,27 @@
 #!/usr/bin/python
 import pyaria2
-import argparse, curses, os, sys, time
+import argparse, configparser, curses, os, sys, time
+
+config = configparser.ConfigParser()
+config.read(os.path.expanduser("~/.config/aria2-console/config"))
+
+server = config['Connection'].get('server', 'localhost')
+port = config['Connection'].getint('port', 6800)
 
 parser = argparse.ArgumentParser(description='Curses-based console client for aria2')
-parser.add_argument('-c','--host', help='Host to connect to', default='raspberrypi')
-parser.add_argument('-p','--port', help='Port to connect through', default=6800)
+parser.add_argument('-s','--server', help='Server to connect to', default=server)
+parser.add_argument('-p','--port', help='Port to connect through', default=port)
 parser.add_argument('-a','--add', help='Add URL to download', required=False)
 args = parser.parse_args()
 
-server = pyaria2.PyAria2(args.host, args.port, None)
+aria2 = pyaria2.PyAria2(args.server, args.port, None)
 
 if args.add != None:
-    server.addUri([args.add])
+    aria2.addUri([args.add])
     sys.exit()
+
+ui = config['UI']
+keybindings = config['Keybindings']
 
 
 class Download:
@@ -65,19 +74,19 @@ def main(screen):
         curses.init_pair(i + 1, i, -1)
 
     s_name = dims[1] - 70
-    s_size = 13
-    s_status = 11
-    s_progress = 15
-    s_percent = 10
-    s_dl = 11
-    s_eta = 10
+    s_size = ui.getint('width-size', 13)
+    s_status = ui.getint('width-status', 11)
+    s_progress = ui.getint('width-progress', 15)
+    s_percent = ui.getint('width-percent', 1)
+    s_dl = ui.getint('width-dl', 11)
+    s_eta = ui.getint('width-eta', 10)
 
 
     def get_downloads():
         downloads = []
-        active = server.tellActive()
-        waiting = server.tellWaiting(0, 100)
-        stopped = server.tellStopped(-1, 100)
+        active = aria2.tellActive()
+        waiting = aria2.tellWaiting(0, 100)
+        stopped = aria2.tellStopped(-1, 100)
         states = [active, waiting, stopped]
 
         for state in states:
@@ -102,7 +111,7 @@ def main(screen):
 
         while selection < 0:
             screen.clear()
-            time.sleep(0.2)
+            time.sleep(ui.getfloat('refresh-interval', 0.2))
 
             num = len(downloads)
             if num == 0:
@@ -173,30 +182,30 @@ def main(screen):
                 dims = screen.getmaxyx()
                 s_name = dims[1] - 68
 
-            elif action == curses.KEY_UP or action == ord('k'):
+            elif action == curses.KEY_UP or action == ord(keybindings.get('up', 'k')):
                 option = (option - 1) % num
-            elif action == curses.KEY_DOWN or action == ord('j'):
+            elif action == curses.KEY_DOWN or action == ord(keybindings.get('down', 'j')):
                 option = (option + 1) % num
 
-            elif action == ord('P'):
-                if len(server.tellActive()) == 0:
-                    server.unpauseAll()
+            elif action == ord(keybindings.get('toggle-pause-all', 'P')):
+                if len(aria2.tellActive()) == 0:
+                    aria2.unpauseAll()
                 else:
-                    server.pauseAll()
+                    aria2.pauseAll()
 
-            elif action == ord('p'):
+            elif action == ord(keybindings.get('toggle-pause', 'p')):
                 if downloads[option].status == 'active' or downloads[option].status == 'waiting':
-                    server.pause(downloads[option].gid)
+                    aria2.pause(downloads[option].gid)
                 elif downloads[option].status == 'paused':
-                    server.unpause(downloads[option].gid)
+                    aria2.unpause(downloads[option].gid)
 
-            elif action == ord('a'):
+            elif action == ord(keybindings.get('add', 'a')):
                 screen.nodelay(False)
                 curses.echo(True)
                 screen.addstr(dims[0] - 1, 0, "add: ")
                 url = screen.getstr(dims[0] - 1, 5, 200)
                 try:
-                    server.addUri([url.strip()])
+                    aria2.addUri([url.strip()])
                 except pyaria2.xmlrpc.client.Fault:
                     screen.addstr(dims[0] - 1, 0, "add: " + url.decode('utf-8'), curses.color_pair(2))
                     screen.refresh()
@@ -205,19 +214,19 @@ def main(screen):
                 screen.nodelay(True)
                 screen.refresh()
 
-            elif action == ord('d'):
+            elif action == ord(keybindings.get('delete', 'd')):
                 if option == len(downloads) - 1:
                     option -= 1
                 try:
-                    server.remove(downloads[option].gid)
+                    aria2.remove(downloads[option].gid)
                     # input()
                 except:
-                    server.removeDownloadResult(downloads[option].gid)
+                    aria2.removeDownloadResult(downloads[option].gid)
 
-            elif action == ord('D'):
-                server.purgeDownloadResult()
+            elif action == ord(keybindings.get('purge', 'D')):
+                aria2.purgeDownloadResult()
 
-            elif action == ord('q'):
+            elif action == ord(keybindings.get('quit', 'q')):
                 break
 
             downloads = get_downloads()

@@ -131,7 +131,7 @@ def main(screen):
                                    (t_percent, s_percent),
                                    (t_dl, s_dl),
                                    (t_eta, s_eta)
-                                  )
+                                 )
 
             curses.init_pair(100, 0, 36)
             screen.addstr(0, 0, t_string, curses.color_pair(100) | curses.A_BOLD)
@@ -150,14 +150,14 @@ def main(screen):
                     i_eta = downloads[i].eta
 
                     row = create_row(
-                                           (i_name, s_name),
-                                           (i_size, s_size),
-                                           (i_status, s_status),
-                                           (i_progress, s_progress),
-                                           (i_percent, s_percent),
-                                           (i_dl, s_dl),
-                                           (i_eta, s_eta)
-                                          )
+                                      (i_name, s_name),
+                                      (i_size, s_size),
+                                      (i_status, s_status),
+                                      (i_progress, s_progress),
+                                      (i_percent, s_percent),
+                                      (i_dl, s_dl),
+                                      (i_eta, s_eta)
+                                    )
 
                     if i_status == 'waiting':
                         color = 5
@@ -182,7 +182,7 @@ def main(screen):
 
             if action == curses.KEY_RESIZE:
                 dims = screen.getmaxyx()
-                s_name = dims[1] - 68
+                s_name = dims[1] - 70
 
             elif action == curses.KEY_UP or action == ord(keybindings.get('up', 'k')):
                 option = (option - 1) % num
@@ -228,8 +228,18 @@ def main(screen):
             elif action == ord(keybindings.get('purge', 'D')):
                 aria2.purgeDownloadResult()
 
+            elif action == ord('K') and downloads[option].status == 'waiting':
+                aria2.changePosition(downloads[option].gid, -1, 'POS_CUR')
+                option -= 1
+            elif action == ord('J') and downloads[option].status == 'waiting':
+                aria2.changePosition(downloads[option].gid, 1, 'POS_CUR')
+                option += 1
+
             elif action == ord(keybindings.get('quit', 'q')):
                 break
+
+            if action != -1:
+                count = (ui.getfloat('refresh-interval', 0.5) / 0.01)
 
             if count == (ui.getfloat('refresh-interval', 0.5) / 0.01):
                 downloads = get_downloads()

@@ -1,27 +1,7 @@
 #!/usr/bin/python
 import pyaria2
 import argparse, configparser, curses, os, sys, time
-
-config = configparser.ConfigParser()
-config.read(os.path.expanduser("~/.config/aria2-console/config"))
-
-server = config['Connection'].get('server', 'localhost')
-port = config['Connection'].getint('port', 6800)
-
-parser = argparse.ArgumentParser(description='Curses-based console client for aria2')
-parser.add_argument('-s','--server', help='Server to connect to', default=server)
-parser.add_argument('-p','--port', help='Port to connect through', default=port)
-parser.add_argument('-a','--add', help='Add URL to download', required=False)
-args = parser.parse_args()
-
-aria2 = pyaria2.PyAria2(args.server, args.port, None)
-
-if args.add != None:
-    aria2.addUri([args.add])
-    sys.exit()
-
-ui = config['UI']
-keybindings = config['Keybindings']
+from socket import gaierror
 
 
 class Download:
@@ -36,7 +16,7 @@ class Download:
         self.size = int(self.data['totalLength'])
         self.refresh()
 
-    def refresh(self)
+    def refresh(self):
         self.done = int(self.data['completedLength'])
         self.status = self.data['status']
 
@@ -58,7 +38,7 @@ class Download:
         return self
 
 
-def main(screen):
+def curse(screen):
     global dims, s_name
     dims = screen.getmaxyx()
 
@@ -175,30 +155,30 @@ def main(screen):
                     screen.addstr(i + 1, (s_name + s_size + s_status), i_progress, graphics[i]|curses.color_pair(color))
 
             screen.refresh()
-            action = screen.getch()
+            key_in = screen.getch()
 
-            if action == curses.KEY_RESIZE:
+            if key_in == curses.KEY_RESIZE:
                 dims = screen.getmaxyx()
                 s_name = dims[1] - 70
 
-            elif action == curses.KEY_UP or action == ord(keybindings.get('up', 'k')):
+            elif key_in == curses.KEY_UP or key_in == ord(keybindings.get('up', 'k')):
                 option = (option - 1) % num
-            elif action == curses.KEY_DOWN or action == ord(keybindings.get('down', 'j')):
+            elif key_in == curses.KEY_DOWN or key_in == ord(keybindings.get('down', 'j')):
                 option = (option + 1) % num
 
-            elif action == ord(keybindings.get('toggle-pause-all', 'P')):
+            elif key_in == ord(keybindings.get('toggle-pause-all', 'P')):
                 if len(aria2.tellActive()) == 0:
                     aria2.unpauseAll()
                 else:
                     aria2.pauseAll()
 
-            elif action == ord(keybindings.get('toggle-pause', 'p')):
+            elif key_in == ord(keybindings.get('toggle-pause', 'p')):
                 if downloads[option].status == 'active' or downloads[option].status == 'waiting':
                     aria2.pause(downloads[option].gid)
                 elif downloads[option].status == 'paused':
                     aria2.unpause(downloads[option].gid)
 
-            elif action == ord(keybindings.get('add', 'a')):
+            elif key_in == ord(keybindings.get('add', 'a')):
                 screen.nodelay(False)
                 curses.echo(True)
                 screen.addstr(dims[0] - 1, 0, "add: ")
@@ -213,38 +193,67 @@ def main(screen):
                 screen.nodelay(True)
                 screen.refresh()
 
-            elif action == ord(keybindings.get('delete', 'd')):
+            elif key_in == ord(keybindings.get('delete', 'd')):
                 if option == len(downloads) - 1:
                     option -= 1
                 try:
                     aria2.remove(downloads[option].gid)
-                    # input()
                 except:
                     aria2.removeDownloadResult(downloads[option].gid)
 
-            elif action == ord(keybindings.get('purge', 'D')):
+            elif key_in == ord(keybindings.get('purge', 'D')):
                 aria2.purgeDownloadResult()
 
-            elif action == ord(keybindings.get('queue-up', 'K')) and downloads[option].status == 'waiting':
+            elif key_in == ord(keybindings.get('queue-up', 'K')) and downloads[option].status == 'waiting':
                 aria2.changePosition(downloads[option].gid, -1, 'POS_CUR')
                 option -= 1
-            elif action == ord(keybindings.set('queue-down', 'J')) and downloads[option].status == 'waiting':
+            elif key_in == ord(keybindings.get('queue-down', 'J')) and downloads[option].status == 'waiting':
                 aria2.changePosition(downloads[option].gid, 1, 'POS_CUR')
                 option += 1
 
-            elif action == ord(keybindings.get('quit', 'q')):
+            elif key_in == ord(keybindings.get('quit', 'q')):
                 break
 
-            if action != -1:
+            if key_in != -1:
                 count = (ui.getfloat('refresh-interval', 0.5) / 0.01)
 
             if count == (ui.getfloat('refresh-interval', 0.5) / 0.01):
                 downloads = get_downloads()
                 count = 0
 
-
     menu()
 
 
-curses.wrapper(main)
+def main():
+    global aria2, ui, keybindings
 
+    config = configparser.ConfigParser()
+    config.read(os.path.expanduser("~/.config/aria2-console/config"))
+
+    server = config['Connection'].get('server', 'localhost')
+    port = config['Connection'].getint('port', 6800)
+
+    parser = argparse.ArgumentParser(description='Curses-based console client for aria2')
+    parser.add_argument('-s','--server', help='Server to connect to', default=server)
+    parser.add_argument('-p','--port', help='Port to connect through', default=port)
+    parser.add_argument('-a','--add', help='Add URL to download', required=False)
+
+    args = parser.parse_args()
+    aria2 = pyaria2.PyAria2(args.server, args.port, None)
+
+    if args.add != None:
+        aria2.addUri([args.add])
+        sys.exit()
+
+    ui = config['UI']
+    keybindings = config['Keybindings']
+
+    try:
+        curses.wrapper(curse)
+    except gaierror:
+        print("Invalid server:", server)
+    except ConnectionRefusedError:
+        print("Connection refused.\nMake sure aria2 is running/authorized on", server + ":" + str(port))
+
+
+main()

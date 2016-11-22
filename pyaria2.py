@@ -1,5 +1,31 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+'''The MIT License (MIT)
+
+Copyright (c) 2014 Killua
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+Description: pyaria2 is a Python 3 module that provides a wrapper class around Aria2's RPC interface. It can be used to build applications that use Aria2 for downloading data.
+Author: Killua
+Email: killua_hzl@163.com
+'''
+
+#!/bin/python
 
 import subprocess
 import xmlrpc.client
@@ -19,38 +45,6 @@ class PyAria2(object):
         port: integer, aria2 rpc port, default is 6800
         session: string, aria2 rpc session saving.
         '''
-        if not isAria2Installed():
-            raise Exception('aria2 is not installed, please install it before.')
-
-        if not isAria2rpcRunning():
-            cmd = 'aria2c' \
-                  ' --enable-rpc' \
-                  ' --rpc-listen-port %d' \
-                  ' --continue' \
-                  ' --max-concurrent-downloads=20' \
-                  ' --max-connection-per-server=10' \
-                  ' --rpc-max-request-size=1024M' % port
-
-            if not session is None:
-                cmd += ' --input-file=%s' \
-                       ' --save-session-interval=60' \
-                       ' --save-session=%s' % (session, session)
-
-            subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-
-            count = 0
-            while True:
-                if isAria2rpcRunning():
-                    break
-                else:
-                    count += 1
-                    time.sleep(3)
-                if count == 5:
-                    raise Exception('aria2 RPC server started failure.')
-            # print('aria2 RPC server is started.')
-        else:
-            pass
-            # print('aria2 RPC server is already running.')
 
         server_uri = SERVER_URI_FORMAT.format(host, port)
         self.server = xmlrpc.client.ServerProxy(server_uri, allow_none=True)
@@ -374,19 +368,3 @@ class PyAria2(object):
         return: This method returns OK for success.
         '''
         return self.server.aria2.forceShutdown()
-
-def isAria2Installed():
-    for cmdpath in os.environ['PATH'].split(':'):
-        if os.path.isdir(cmdpath) and 'aria2c' in os.listdir(cmdpath):
-            return True
-
-    return False
-
-def isAria2rpcRunning():
-    pgrep_process = subprocess.Popen('pgrep -l aria2', shell=True, stdout=subprocess.PIPE)
-
-    if pgrep_process.stdout.readline() == b'':
-        return False
-    else:
-        return True
-

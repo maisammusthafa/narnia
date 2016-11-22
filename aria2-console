@@ -34,12 +34,9 @@ class Download:
             self.name = "N/A"
 
         self.size = int(self.data['totalLength'])
-        self.refresh(True)
+        self.refresh()
 
-    def refresh(self, scope):
-        # if scope == 1 and self.status != 'active':
-            # return
-
+    def refresh(self)
         self.done = int(self.data['completedLength'])
         self.status = self.data['status']
 
@@ -228,10 +225,10 @@ def main(screen):
             elif action == ord(keybindings.get('purge', 'D')):
                 aria2.purgeDownloadResult()
 
-            elif action == ord('K') and downloads[option].status == 'waiting':
+            elif action == ord(keybindings.get('queue-up', 'K')) and downloads[option].status == 'waiting':
                 aria2.changePosition(downloads[option].gid, -1, 'POS_CUR')
                 option -= 1
-            elif action == ord('J') and downloads[option].status == 'waiting':
+            elif action == ord(keybindings.set('queue-down', 'J')) and downloads[option].status == 'waiting':
                 aria2.changePosition(downloads[option].gid, 1, 'POS_CUR')
                 option += 1
 

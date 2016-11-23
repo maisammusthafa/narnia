@@ -208,6 +208,10 @@ def curse(screen):
                     i_progress = int((downloads[i].progress) / 100 * (s_progress - 1)) * '█'
                     screen.addstr(i + 1, (s_name + s_size + s_status), i_progress, graphics[i]|curses.color_pair(color))
 
+                    s_server = "server: " + server + ":" + str(port)
+                    s_string = create_row((s_server, screen.width - 1))
+                    screen.addstr(screen.height - 1, 0, s_string, curses.color_pair(101))
+
             screen.refresh()
             key_in = screen.getch()
 

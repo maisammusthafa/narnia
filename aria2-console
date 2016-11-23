@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/bin/python
 import pyaria2
 import argparse, configparser, curses, os, sys, time
 from socket import gaierror
@@ -8,7 +8,12 @@ class Download:
         self.data = data
         self.gid = self.data['gid']
 
-        self.name = os.path.basename(self.data['files'][0]['path'])
+        self.num_files = len(self.data['files'])
+
+        try:
+            self.name = self.data['bittorrent']['info']['name']
+        except:
+            self.name = os.path.basename(self.data['files'][0]['path'])
         if self.name == '':
             self.name = "N/A"
 
@@ -88,12 +93,15 @@ class Window:
 
         self.win.addstr(0, 0, t_string, curses.color_pair(100) | curses.A_BOLD)
 
+
         if len(self.rows) != 0:
-            for i in range(len(self.rows)):
+            j = 0
+            for i in range(self.num_rows):
                 if i > self.height - 3:
                     break
 
-                i_name = self.rows[i].name[:(self.w_name - 3)]
+                i_name = self.rows[i].name
+                i_name = self.rows[i].name[:(self.w_name - 5)] + ".." if len(i_name) > self.w_name - 5 else i_name
                 i_size = str("%0.2f" % (self.rows[i].size / 1048576)) + " MB"
                 i_status = self.rows[i].status.replace("active", "active  ")
                 i_progress = ' ' * (self.w_progress - 1)
@@ -124,10 +132,38 @@ class Window:
                 else:
                     color = 16
 
-                self.win.addstr(i + 1, 0, row, highlight[i]|curses.color_pair(color))
+                self.win.addstr(i + j + 1, 0, row, highlight[i]|curses.color_pair(color))
 
                 i_progress = int((self.rows[i].progress) / 100 * (self.w_progress - 1)) * '█'
-                self.win.addstr(i + 1, (self.w_name + self.w_size + self.w_status), i_progress, highlight[i]|curses.color_pair(color))
+                self.win.addstr(i + j + 1, (self.w_name + self.w_size + self.w_status), i_progress, highlight[i]|curses.color_pair(color))
+
+                if self.rows[i].num_files != 1:
+                    for k in range(self.rows[i].num_files):
+
+                        f_name = "   " + os.path.basename(self.rows[i].data['files'][k]['path'])
+                        f_name = f_name[:(self.w_name - 5)] + ".." if len(f_name) > self.w_name - 5 else f_name
+                        f_size = str("%0.2f" % (int(self.rows[i].data['files'][k]['length']) / 1048576)) + " MB"
+                        f_status = self.rows[i].data['files'][k]['selected'].replace("true", "   *   ").replace("false", "       ")
+                        if f_size != 0:
+                            progress = int(self.rows[i].data['files'][k]['completedLength']) / int(self.rows[i].data['files'][k]['length']) * 100
+                        else:
+                            progress = 0
+
+                        f_progress = ' ' * (self.w_progress - 1)
+                        f_percent = str("%0.2f" % progress) + "%"
+
+                        f_row = self.create_row(
+                                          (f_name, self.w_name),
+                                          (f_size, self.w_size),
+                                          (f_status, self.w_status),
+                                          (f_progress, self.w_progress),
+                                          (f_percent, self.w_percent),
+                                        )
+
+                        self.win.addstr(i + j + k + 2, 0, f_row)
+                        f_progress = int((progress) / 100 * (self.w_progress - 1)) * '█'
+                        self.win.addstr(i + j + k + 2, (self.w_name + self.w_size + self.w_status), f_progress, highlight[i]|curses.color_pair(color))
+                    j += self.rows[i].num_files
 
         s_server = "server: " + server + ":" + str(port)
         s_string = self.create_row((s_server, self.width - 1))
@@ -179,6 +215,7 @@ def curse(screen):
 
     curses.init_pair(100, 0, 36)
     curses.init_pair(101, 12, 0)
+    curses.init_pair(102, 8, 8)
 
     screen.rows = get_downloads()
     screen.num_rows = len(screen.rows)
@@ -216,12 +253,12 @@ def curse(screen):
         elif key_in == keys.add:
             screen.win.nodelay(False)
             curses.echo(True)
-            screen.addstr(screen.height - 1, 0, "add: ", curses.color_pair(101))
+            screen.win.addstr(screen.height - 1, 0, "add: ", curses.color_pair(101))
             url = screen.win.getstr(screen.height - 1, 5, 200)
             try:
                 aria2.addUri([url.strip()])
             except pyaria2.xmlrpc.client.Fault:
-                screen.addstr(screen.height - 1, 0, "add: " + url.decode('utf-8'), curses.color_pair(2))
+                screen.win.addstr(screen.height - 1, 0, "add: " + url.decode('utf-8'), curses.color_pair(2))
                 screen.win.refresh()
                 time.sleep(1)
             curses.echo(False)
@@ -255,6 +292,7 @@ def curse(screen):
 
         if screen.count == (ui.getfloat('refresh-interval', 0.5) / 0.01):
             screen.rows = get_downloads()
+            screen.num_rows = len(screen.rows)
             screen.count = 0
 
 

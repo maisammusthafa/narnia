@@ -39,38 +39,101 @@ class Download:
 
 class Window:
     def __init__(self, height, width, y, x):
-        self.height = height
-        self.width = width
-        self.y = y
-        self.x = x
-        self.num_rows = 0
+        self.height, self.width  = height, width
+        self.y, self.x = y, x
         self.win = None
+
+        self.w_name = self.width - 70
+        self.w_size = ui.getint('width-size', 13)
+        self.w_status = ui.getint('width-status', 11)
+        self.w_progress = ui.getint('width-progress', 15)
+        self.w_percent = ui.getint('width-percent', 1)
+        self.w_dl = ui.getint('width-dl', 11)
+        self.w_eta = ui.getint('width-eta', 10)
+
+        self.option = 0
+        self.rows = None
+        self.num_rows = 0
+        self.count = 0
 
     def create(self):
         self.win = curses.newwin(self.height, self.width, self.y, self.x)
+        self.win.nodelay(True)
+        self.win.keypad(True)
 
-    def refresh(self):
-        self.win.refresh()
+    def create_row(self, *items):
+        row = ""
+        for item in items:
+            row += (item[0] +  (item[1] - len(item[0])) * ' ')
+        return row
 
-    def clear(self):
+    def draw(self):
         self.win.clear()
+        time.sleep(0.01)
+        self.count += 1
 
-    def nodelay(self, state):
-        self.win.nodelay(state)
+        highlight = [0] * self.num_rows
+        highlight[self.option] = curses.A_REVERSE
 
-    def addstr(self, y, x, string, attrib):
-        # self.clear()
-        self.win.addstr(y, x, string, attrib)
-        # self.refresh()
+        t_name, t_size, t_status, t_progress, t_percent, t_dl, t_eta = "NAME", "SIZE", "STATUS", "PROGRESS", "", "DL", "ETA"
+        t_string = self.create_row(
+                               (t_name, self.w_name),
+                               (t_size, self.w_size),
+                               (t_status, self.w_status),
+                               (t_progress, self.w_progress),
+                               (t_percent, self.w_percent),
+                               (t_dl, self.w_dl),
+                               (t_eta, self.w_eta)
+                             )
 
-    def getch(self):
-        return self.win.getch()
+        self.win.addstr(0, 0, t_string, curses.color_pair(100) | curses.A_BOLD)
 
-    def getstr(self, y, x, chars):
-        return self.win.getstr(y, x, chars)
+        if len(self.rows) != 0:
+            for i in range(len(self.rows)):
+                if i > self.height - 3:
+                    break
 
-    def getmaxyx(self):
-        return (self.height, self.width)
+                i_name = self.rows[i].name[:(self.w_name - 3)]
+                i_size = str("%0.2f" % (self.rows[i].size / 1048576)) + " MB"
+                i_status = self.rows[i].status.replace("active", "active  ")
+                i_progress = ' ' * (self.w_progress - 1)
+                i_percent = str("%0.2f" % self.rows[i].progress) + "%"
+                i_dl = (str("%0.1f" % self.rows[i].dl) + " K").replace("0.0 K", "N/A")
+                i_eta = self.rows[i].eta
+
+                row = self.create_row(
+                                  (i_name, self.w_name),
+                                  (i_size, self.w_size),
+                                  (i_status, self.w_status),
+                                  (i_progress, self.w_progress),
+                                  (i_percent, self.w_percent),
+                                  (i_dl, self.w_dl),
+                                  (i_eta, self.w_eta)
+                                )
+
+                if i_status == 'waiting':
+                    color = 5
+                elif i_status == 'complete':
+                    color = 3
+                elif i_status == 'removed':
+                    color = 4
+                elif i_status == 'error':
+                    color = 2
+                elif i_status == 'paused':
+                    color = 11
+                else:
+                    color = 16
+
+                self.win.addstr(i + 1, 0, row, highlight[i]|curses.color_pair(color))
+
+                i_progress = int((self.rows[i].progress) / 100 * (self.w_progress - 1)) * '█'
+                self.win.addstr(i + 1, (self.w_name + self.w_size + self.w_status), i_progress, highlight[i]|curses.color_pair(color))
+
+        s_server = "server: " + server + ":" + str(port)
+        s_string = self.create_row((s_server, self.width - 1))
+        self.win.addstr(self.height - 1, 0, s_string, curses.color_pair(101))
+
+        self.win.refresh()
 
 
 class Keybindings:
@@ -87,14 +150,26 @@ class Keybindings:
         self.quit = ord(keybindings.get('quit', 'q'))
 
 
-def curse(screen):
-    global s_name
+def get_downloads():
+    downloads = []
+    active = aria2.tellActive()
+    waiting = aria2.tellWaiting(0, 100)
+    stopped = aria2.tellStopped(-1, 100)
+    states = [active, waiting, stopped]
 
+    for state in states:
+        for i in range(len(state)):
+            downloads.append(Download(state[i]))
+
+    return downloads
+
+
+def curse(screen):
     tty_h, tty_w = list(map(int, os.popen('stty size', 'r').read().split()))
     screen = Window(tty_h, tty_w, 0, 0)
     screen.create()
 
-    screen.clear()
+    screen.win.clear()
     curses.start_color()
     curses.use_default_colors()
     curses.curs_set(False)
@@ -102,187 +177,85 @@ def curse(screen):
     for i in range(0, curses.COLORS):
         curses.init_pair(i + 1, i, -1)
 
-    s_name = screen.width - 70
-    s_size = ui.getint('width-size', 13)
-    s_status = ui.getint('width-status', 11)
-    s_progress = ui.getint('width-progress', 15)
-    s_percent = ui.getint('width-percent', 1)
-    s_dl = ui.getint('width-dl', 11)
-    s_eta = ui.getint('width-eta', 10)
+    curses.init_pair(100, 0, 36)
+    curses.init_pair(101, 12, 0)
 
+    screen.rows = get_downloads()
+    screen.num_rows = len(screen.rows)
 
-    def get_downloads():
-        downloads = []
-        active = aria2.tellActive()
-        waiting = aria2.tellWaiting(0, 100)
-        stopped = aria2.tellStopped(-1, 100)
-        states = [active, waiting, stopped]
+    if screen.num_rows == 0:
+        screen.num_rows = 1
 
-        for state in states:
-            for i in range(len(state)):
-                downloads.append(Download(state[i]))
+    while True:
+        screen.draw()
+        key_in = screen.win.getch()
 
-        return downloads
+        if key_in == curses.KEY_RESIZE:
+            tty_h, tty_w = list(map(int, os.popen('stty size', 'r').read().split()))
+            screen.height = tty_h
+            screen.width = tty_w
+            screen.w_name = screen.width - 70
 
+        elif key_in == curses.KEY_UP or key_in == keys.up:
+            screen.option = (screen.option - 1) % screen.num_rows
+        elif key_in == curses.KEY_DOWN or key_in == keys.down:
+            screen.option = (screen.option + 1) % screen.num_rows
 
-    def menu():
-        count = 0
-        global s_name
-        selection = -1
-        option = 0
-        screen.nodelay(True)
-        downloads = get_downloads()
+        elif key_in == keys.pause_all:
+            if len(aria2.tellActive()) == 0:
+                aria2.unpauseAll()
+            else:
+                aria2.pauseAll()
 
-        curses.init_pair(100, 0, 36)
-        curses.init_pair(101, 12, 0)
+        elif key_in == keys.pause:
+            if screen.rows[screen.option].status == 'active' or screen.rows[screen.option].status == 'waiting':
+                aria2.pause(screen.rows[screen.option].gid)
+            elif screen.rows[screen.option].status == 'paused':
+                aria2.unpause(screen.rows[screen.option].gid)
 
-        def create_row(*items):
-            row = ""
-            for item in items:
-                row += (item[0] +  (item[1] - len(item[0])) * ' ')
-            return row
+        elif key_in == keys.add:
+            screen.win.nodelay(False)
+            curses.echo(True)
+            screen.addstr(screen.height - 1, 0, "add: ", curses.color_pair(101))
+            url = screen.win.getstr(screen.height - 1, 5, 200)
+            try:
+                aria2.addUri([url.strip()])
+            except pyaria2.xmlrpc.client.Fault:
+                screen.addstr(screen.height - 1, 0, "add: " + url.decode('utf-8'), curses.color_pair(2))
+                screen.win.refresh()
+                time.sleep(1)
+            curses.echo(False)
+            screen.win.nodelay(True)
+            screen.win.refresh()
 
-        while selection < 0:
-            screen.clear()
-            time.sleep(0.01)
-            count += 1
+        elif key_in == keys.delete:
+            if screen.option == len(screen.rows) - 1:
+                screen.option -= 1
+            try:
+                aria2.remove(screen.rows[screen.option].gid)
+            except:
+                aria2.removeDownloadResult(screen.rows[screen.option].gid)
 
-            num = len(downloads)
-            if num == 0:
-                num = 1
+        elif key_in == keys.purge:
+            aria2.purgeDownloadResult()
 
-            graphics = [0] * num
-            graphics[option] = curses.A_REVERSE
+        elif key_in == keys.queue_up and screen.rows[screen.option].status == 'waiting':
+            aria2.changePosition(screen.rows[screen.option].gid, -1, 'POS_CUR')
+            screen.option -= 1
+        elif key_in == keys.queue_down and screen.rows[screen.option].status == 'waiting':
+            aria2.changePosition(screen.rows[screen.option].gid, 1, 'POS_CUR')
+            screen.option += 1
 
-            t_name, t_size, t_status, t_progress, t_percent, t_dl, t_eta = "NAME", "SIZE", "STATUS", "PROGRESS", "", "DL", "ETA"
-            t_string = create_row(
-                                   (t_name, s_name),
-                                   (t_size, s_size),
-                                   (t_status, s_status),
-                                   (t_progress, s_progress),
-                                   (t_percent, s_percent),
-                                   (t_dl, s_dl),
-                                   (t_eta, s_eta)
-                                 )
+        elif key_in == keys.quit:
+            break
 
-            screen.addstr(0, 0, t_string, curses.color_pair(100) | curses.A_BOLD)
+        if key_in != -1:
+            screen.count = (ui.getfloat('refresh-interval', 0.5) / 0.01)
+            screen.win.refresh()
 
-            if len(downloads) != 0:
-                for i in range(len(downloads)):
-                    if i > screen.height - 3:
-                        break
-
-                    i_name = downloads[i].name[:(s_name - 3)]
-                    i_size = str("%0.2f" % (downloads[i].size / 1048576)) + " MB"
-                    i_status = downloads[i].status.replace("active", "active  ")
-                    i_progress = ' ' * (s_progress - 1)
-                    i_percent = str("%0.2f" % downloads[i].progress) + "%"
-                    i_dl = (str("%0.1f" % downloads[i].dl) + " K").replace("0.0 K", "N/A")
-                    i_eta = downloads[i].eta
-
-                    row = create_row(
-                                      (i_name, s_name),
-                                      (i_size, s_size),
-                                      (i_status, s_status),
-                                      (i_progress, s_progress),
-                                      (i_percent, s_percent),
-                                      (i_dl, s_dl),
-                                      (i_eta, s_eta)
-                                    )
-
-                    if i_status == 'waiting':
-                        color = 5
-                    elif i_status == 'complete':
-                        color = 3
-                    elif i_status == 'removed':
-                        color = 4
-                    elif i_status == 'error':
-                        color = 2
-                    elif i_status == 'paused':
-                        color = 11
-                    else:
-                        color = 16
-
-                    screen.addstr(i + 1, 0, row, graphics[i]|curses.color_pair(color))
-
-                    i_progress = int((downloads[i].progress) / 100 * (s_progress - 1)) * '█'
-                    screen.addstr(i + 1, (s_name + s_size + s_status), i_progress, graphics[i]|curses.color_pair(color))
-
-                    s_server = "server: " + server + ":" + str(port)
-                    s_string = create_row((s_server, screen.width - 1))
-                    screen.addstr(screen.height - 1, 0, s_string, curses.color_pair(101))
-
-            screen.refresh()
-            key_in = screen.getch()
-
-            if key_in == curses.KEY_RESIZE:
-                tty_h, tty_w = list(map(int, os.popen('stty size', 'r').read().split()))
-                screen.height = tty_h
-                screen.width = tty_w
-                s_name = screen.width - 70
-
-            elif key_in == curses.KEY_UP or key_in == keys.up:
-                option = (option - 1) % num
-            elif key_in == curses.KEY_DOWN or key_in == keys.down:
-                option = (option + 1) % num
-
-            elif key_in == keys.pause_all:
-                if len(aria2.tellActive()) == 0:
-                    aria2.unpauseAll()
-                else:
-                    aria2.pauseAll()
-
-            elif key_in == keys.pause:
-                if downloads[option].status == 'active' or downloads[option].status == 'waiting':
-                    aria2.pause(downloads[option].gid)
-                elif downloads[option].status == 'paused':
-                    aria2.unpause(downloads[option].gid)
-
-            elif key_in == keys.add:
-                screen.nodelay(False)
-                curses.echo(True)
-                screen.addstr(screen.height - 1, 0, "add: ", 0)
-                url = screen.getstr(screen.height - 1, 5, 200)
-                try:
-                    aria2.addUri([url.strip()])
-                except pyaria2.xmlrpc.client.Fault:
-                    screen.addstr(screen.height - 1, 0, "add: " + url.decode('utf-8'), curses.color_pair(2))
-                    screen.refresh()
-                    time.sleep(1)
-                curses.echo(False)
-                screen.nodelay(True)
-                screen.refresh()
-
-            elif key_in == keys.delete:
-                if option == len(downloads) - 1:
-                    option -= 1
-                try:
-                    aria2.remove(downloads[option].gid)
-                except:
-                    aria2.removeDownloadResult(downloads[option].gid)
-
-            elif key_in == keys.purge:
-                aria2.purgeDownloadResult()
-
-            elif key_in == keys.queue_up and downloads[option].status == 'waiting':
-                aria2.changePosition(downloads[option].gid, -1, 'POS_CUR')
-                option -= 1
-            elif key_in == keys.queue_down and downloads[option].status == 'waiting':
-                aria2.changePosition(downloads[option].gid, 1, 'POS_CUR')
-                option += 1
-
-            elif key_in == keys.quit:
-                break
-
-            if key_in != -1:
-                count = (ui.getfloat('refresh-interval', 0.5) / 0.01)
-                screen.refresh()
-
-            if count == (ui.getfloat('refresh-interval', 0.5) / 0.01):
-                downloads = get_downloads()
-                count = 0
-
-    menu()
+        if screen.count == (ui.getfloat('refresh-interval', 0.5) / 0.01):
+            screen.rows = get_downloads()
+            screen.count = 0
 
 
 def main():

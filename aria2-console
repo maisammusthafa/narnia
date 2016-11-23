@@ -37,6 +37,42 @@ class Download:
         return self
 
 
+class Window:
+    def __init__(self, height, width, y, x):
+        self.height = height
+        self.width = width
+        self.y = y
+        self.x = x
+        self.num_rows = 0
+        self.win = None
+
+    def create(self):
+        self.win = curses.newwin(self.height, self.width, self.y, self.x)
+
+    def refresh(self):
+        self.win.refresh()
+
+    def clear(self):
+        self.win.clear()
+
+    def nodelay(self, state):
+        self.win.nodelay(state)
+
+    def addstr(self, y, x, string, attrib):
+        # self.clear()
+        self.win.addstr(y, x, string, attrib)
+        # self.refresh()
+
+    def getch(self):
+        return self.win.getch()
+
+    def getstr(self, y, x, chars):
+        return self.win.getstr(y, x, chars)
+
+    def getmaxyx(self):
+        return (self.height, self.width)
+
+
 class Keybindings:
     def __init__(self, keybindings):
         self.up = ord(keybindings.get('up', 'k'))
@@ -52,8 +88,11 @@ class Keybindings:
 
 
 def curse(screen):
-    global dims, s_name
-    dims = screen.getmaxyx()
+    global s_name
+
+    tty_h, tty_w = list(map(int, os.popen('stty size', 'r').read().split()))
+    screen = Window(tty_h, tty_w, 0, 0)
+    screen.create()
 
     screen.clear()
     curses.start_color()
@@ -63,7 +102,7 @@ def curse(screen):
     for i in range(0, curses.COLORS):
         curses.init_pair(i + 1, i, -1)
 
-    s_name = dims[1] - 70
+    s_name = screen.width - 70
     s_size = ui.getint('width-size', 13)
     s_status = ui.getint('width-status', 11)
     s_progress = ui.getint('width-progress', 15)
@@ -88,11 +127,14 @@ def curse(screen):
 
     def menu():
         count = 0
-        global dims, s_name
+        global s_name
         selection = -1
         option = 0
         screen.nodelay(True)
         downloads = get_downloads()
+
+        curses.init_pair(100, 0, 36)
+        curses.init_pair(101, 12, 0)
 
         def create_row(*items):
             row = ""
@@ -123,12 +165,11 @@ def curse(screen):
                                    (t_eta, s_eta)
                                  )
 
-            curses.init_pair(100, 0, 36)
             screen.addstr(0, 0, t_string, curses.color_pair(100) | curses.A_BOLD)
 
             if len(downloads) != 0:
                 for i in range(len(downloads)):
-                    if i > dims[0] - 3:
+                    if i > screen.height - 3:
                         break
 
                     i_name = downloads[i].name[:(s_name - 3)]
@@ -171,8 +212,10 @@ def curse(screen):
             key_in = screen.getch()
 
             if key_in == curses.KEY_RESIZE:
-                dims = screen.getmaxyx()
-                s_name = dims[1] - 70
+                tty_h, tty_w = list(map(int, os.popen('stty size', 'r').read().split()))
+                screen.height = tty_h
+                screen.width = tty_w
+                s_name = screen.width - 70
 
             elif key_in == curses.KEY_UP or key_in == keys.up:
                 option = (option - 1) % num
@@ -194,12 +237,12 @@ def curse(screen):
             elif key_in == keys.add:
                 screen.nodelay(False)
                 curses.echo(True)
-                screen.addstr(dims[0] - 1, 0, "add: ")
-                url = screen.getstr(dims[0] - 1, 5, 200)
+                screen.addstr(screen.height - 1, 0, "add: ", 0)
+                url = screen.getstr(screen.height - 1, 5, 200)
                 try:
                     aria2.addUri([url.strip()])
                 except pyaria2.xmlrpc.client.Fault:
-                    screen.addstr(dims[0] - 1, 0, "add: " + url.decode('utf-8'), curses.color_pair(2))
+                    screen.addstr(screen.height - 1, 0, "add: " + url.decode('utf-8'), curses.color_pair(2))
                     screen.refresh()
                     time.sleep(1)
                 curses.echo(False)
@@ -229,6 +272,7 @@ def curse(screen):
 
             if key_in != -1:
                 count = (ui.getfloat('refresh-interval', 0.5) / 0.01)
+                screen.refresh()
 
             if count == (ui.getfloat('refresh-interval', 0.5) / 0.01):
                 downloads = get_downloads()
@@ -238,7 +282,7 @@ def curse(screen):
 
 
 def main():
-    global aria2, ui, keys
+    global aria2, ui, keys, server, port
 
     config = configparser.ConfigParser()
     config.read(os.path.expanduser("~/.config/aria2-console/config"))
@@ -266,7 +310,7 @@ def main():
     except gaierror:
         print("Invalid server:", server)
     except ConnectionRefusedError:
-        print("Connection refused.\nMake sure aria2 is running/authorized on", server + ":" + str(port))
+        print("Connection refused.\nMake sure aria2 is running or authorized on", server + ":" + str(port))
 
 
 main()

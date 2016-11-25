@@ -59,6 +59,7 @@ class Window:
         self.option = 0
         self.num_rows = 0
         self.count = 0
+        self.refresh_marker = ui.getfloat('refresh-interval', 0.5) / 0.01
         self.highlight = []
 
         self.t_string = ""
@@ -220,6 +221,94 @@ def get_rows(screen):
                 j += screen.rows[i].num_files
 
 
+def key_actions(screen, key):
+    def refresh_windows():
+        tty_h, tty_w = list(map(int, os.popen('stty size', 'r').read().split()))
+        screen.height = tty_h
+        screen.width = tty_w
+        screen.w_name = screen.width - 71
+        screen.refresh_header()
+        screen.refresh_status()
+
+    def nav_up():
+        screen.option = (screen.option - 1) % screen.num_rows
+
+    def nav_down():
+        screen.option = (screen.option + 1) % screen.num_rows
+
+    def pause_all():
+        if len(aria2.tellActive()) == 0:
+            aria2.unpauseAll()
+        else:
+            aria2.pauseAll()
+
+    def pause():
+        if screen.rows[screen.option].status == 'active' or screen.rows[screen.option].status == 'waiting':
+            aria2.pause(screen.rows[screen.option].gid)
+        elif screen.rows[screen.option].status == 'paused':
+            aria2.unpause(screen.rows[screen.option].gid)
+
+    def add():
+        screen.win.nodelay(False)
+        curses.echo(True)
+        colors.print_str(screen.height - 1, 0, "<status.b>" + "add:" + "</status.b> ", screen.win, True)
+        url = screen.win.getstr(screen.height - 1, 5, 200)
+        try:
+            aria2.addUri([url.strip()])
+        except pyaria2.xmlrpc.client.Fault:
+            colors.print_str(screen.height - 1, 0, "<red>" + "add: " + url.decode('utf-8') + "</red>", screen.win, True)
+            screen.win.refresh()
+            time.sleep(1)
+        curses.echo(False)
+        screen.win.nodelay(True)
+        screen.win.refresh()
+
+    def delete():
+        if screen.option == len(screen.rows) - 1:
+            screen.option -= 1
+        try:
+            aria2.remove(screen.rows[screen.option].gid)
+        except:
+            aria2.removeDownloadResult(screen.rows[screen.option].gid)
+
+    def purge():
+        aria2.purgeDownloadResult()
+
+    def queue_up():
+        if screen.rows[screen.option].status == 'waiting':
+            aria2.changePosition(screen.rows[screen.option].gid, -1, 'POS_CUR')
+            screen.option -= 1
+
+    def queue_down():
+        if screen.rows[screen.option].status == 'waiting':
+            aria2.changePosition(screen.rows[screen.option].gid, 1, 'POS_CUR')
+            screen.option += 1
+
+    def quit():
+        exit()
+
+    def none():
+        pass
+
+    actions = {
+            curses.KEY_RESIZE:refresh_windows,
+            curses.KEY_UP:nav_up,
+            keys.up:nav_up,
+            curses.KEY_DOWN:nav_down,
+            keys.down:nav_down,
+            keys.pause_all:pause_all,
+            keys.pause:pause,
+            keys.add:add,
+            keys.delete:delete,
+            keys.purge:purge,
+            keys.queue_up:queue_up,
+            keys.queue_down:queue_down,
+            keys.quit:quit,
+            -1:none
+            }
+
+    actions[key]()
+
 
 def curse(screen):
     tty_h, tty_w = list(map(int, os.popen('stty size', 'r').read().split()))
@@ -240,79 +329,23 @@ def curse(screen):
         screen.num_rows = 1
 
     while True:
-
         screen.draw()
+
         key_in = screen.win.getch()
-
-        if key_in == curses.KEY_RESIZE:
-            tty_h, tty_w = list(map(int, os.popen('stty size', 'r').read().split()))
-            screen.height = tty_h
-            screen.width = tty_w
-            screen.w_name = screen.width - 71
-            screen.refresh_header()
-            screen.refresh_status()
-
-        elif key_in == curses.KEY_UP or key_in == keys.up:
-            screen.option = (screen.option - 1) % screen.num_rows
-        elif key_in == curses.KEY_DOWN or key_in == keys.down:
-            screen.option = (screen.option + 1) % screen.num_rows
-
-        elif key_in == keys.pause_all:
-            if len(aria2.tellActive()) == 0:
-                aria2.unpauseAll()
-            else:
-                aria2.pauseAll()
-
-        elif key_in == keys.pause:
-            if screen.rows[screen.option].status == 'active' or screen.rows[screen.option].status == 'waiting':
-                aria2.pause(screen.rows[screen.option].gid)
-            elif screen.rows[screen.option].status == 'paused':
-                aria2.unpause(screen.rows[screen.option].gid)
-
-        elif key_in == keys.add:
-            screen.win.nodelay(False)
-            curses.echo(True)
-            colors.print_str(screen.height - 1, 0, "<status.b>" + "add:" + "</status.b> ", screen.win, True)
-            url = screen.win.getstr(screen.height - 1, 5, 200)
-            try:
-                aria2.addUri([url.strip()])
-            except pyaria2.xmlrpc.client.Fault:
-                colors.print_str(screen.height - 1, 0, "<red>" + "add: " + url.decode('utf-8') + "</red>", screen.win, True)
-                screen.win.refresh()
-                time.sleep(1)
-            curses.echo(False)
-            screen.win.nodelay(True)
-            screen.win.refresh()
-
-        elif key_in == keys.delete:
-            if screen.option == len(screen.rows) - 1:
-                screen.option -= 1
-            try:
-                aria2.remove(screen.rows[screen.option].gid)
-            except:
-                aria2.removeDownloadResult(screen.rows[screen.option].gid)
-
-        elif key_in == keys.purge:
-            aria2.purgeDownloadResult()
-
-        elif key_in == keys.queue_up and screen.rows[screen.option].status == 'waiting':
-            aria2.changePosition(screen.rows[screen.option].gid, -1, 'POS_CUR')
-            screen.option -= 1
-        elif key_in == keys.queue_down and screen.rows[screen.option].status == 'waiting':
-            aria2.changePosition(screen.rows[screen.option].gid, 1, 'POS_CUR')
-            screen.option += 1
-
-        elif key_in == keys.quit:
-            break
+        key_actions(screen, key_in)
 
         if key_in != -1:
-            screen.count = (ui.getfloat('refresh-interval', 0.5) / 0.01)
+            screen.count = screen.refresh_marker
             screen.win.refresh()
 
-        if screen.count == (ui.getfloat('refresh-interval', 0.5) / 0.01):
+        if screen.count == screen.refresh_marker:
             screen.rows = get_downloads()
             screen.num_rows = len(screen.rows)
             screen.count = 0
+
+
+def exit():
+    sys.exit()
 
 
 def main():

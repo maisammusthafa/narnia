@@ -18,7 +18,7 @@ def get_style(tag):
         pass
 
     try:
-        return curses.color_pair(colors[color])
+        return curses.color_pair(colors[color]) | highlight
     except:
         return 0
 
@@ -62,9 +62,10 @@ def init_colors():
     for i in range(16):
         curses.init_pair(i, i, -1)
 
+    curses.init_pair(100, 0, 36)
+    curses.init_pair(101, 12, 0)
+
     colors = {
-              'default': 12,
-              'br': 12,
               'red': 1,
               'green': 2,
               'yellow': 3,
@@ -79,6 +80,10 @@ def init_colors():
               'base01': 10,
               'base2': 7,
               'base3': 15,
-              'base03': 8
+              'base03': 8,
+              'default': 12,
+              'br': 12,
+              'header': 100,
+              'status': 101
              }
 

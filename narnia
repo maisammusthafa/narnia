@@ -91,7 +91,7 @@ class Window:
                                (t_eta, self.w_eta)
                              )
 
-        self.win.addstr(0, 0, t_string, curses.color_pair(100) | curses.A_BOLD)
+        colors.print_str(0, 0, "<header.b>" + t_string + "</header.b>", self.win, True)
 
 
         if len(self.rows) != 0:
@@ -120,22 +120,25 @@ class Window:
                                 )
 
                 if i_status == 'waiting':
-                    color = 4
+                    color = '<blue>'
                 elif i_status == 'complete':
-                    color = 2
+                    color = '<green>'
                 elif i_status == 'removed':
-                    color = 3
+                    color = '<yellow>'
                 elif i_status == 'error':
-                    color = 1
+                    color = '<red>'
                 elif i_status == 'paused':
-                    color = 10
+                    color = '<default>'
                 else:
-                    color = 15
+                    color = '<base3>'
 
-                self.win.addstr(i + j + 1, 0, row, highlight[i]|curses.color_pair(color))
+                if highlight[i] != 0:
+                    color = color.replace('>', '.r>')
+
+                colors.print_str(i + j + 1, 0, color + row + color.replace('<', '</'), self.win, True)
 
                 i_progress = int((self.rows[i].progress) / 100 * (self.w_progress - 1)) * '█'
-                self.win.addstr(i + j + 1, (self.w_name + self.w_size + self.w_status), i_progress, highlight[i]|curses.color_pair(color))
+                colors.print_str(i + j + 1, (self.w_name + self.w_size + self.w_status), color + i_progress + color.replace('<', '</'), self.win, True)
 
                 if self.rows[i].num_files != 1:
                     for k in range(self.rows[i].num_files):
@@ -161,14 +164,16 @@ class Window:
                                           (f_percent, self.w_percent),
                                         )
 
-                        self.win.addstr(i + j + k + 2, 0, f_row)
+                        color = '<default>'
+
+                        colors.print_str(i + j + k + 2, 0, color + f_row + color.replace('<', '</'), self.win, True)
                         f_progress = int((progress) / 100 * (self.w_progress - 1)) * '█'
-                        self.win.addstr(i + j + k + 2, (self.w_name + self.w_size + self.w_status), f_progress, highlight[i]|curses.color_pair(color))
+                        colors.print_str(i + j + k + 2, (self.w_name + self.w_size + self.w_status), color + f_progress + color.replace('<', '</'), self.win, True)
                     j += self.rows[i].num_files
 
         s_server = "server: " + server + ":" + str(port)
         s_string = self.create_row((s_server, self.width - 1))
-        self.win.addstr(self.height - 1, 0, s_string, curses.color_pair(101))
+        colors.print_str(self.height - 1, 0, "<status.b>" + s_string + "</status.b>", self.win, True)
 
         self.win.refresh()
 
@@ -212,7 +217,6 @@ def curse(screen):
 
     curses.init_pair(100, 0, 36)
     curses.init_pair(101, 12, 0)
-    curses.init_pair(102, 8, 8)
 
     screen.rows = get_downloads()
     screen.num_rows = len(screen.rows)
@@ -250,12 +254,12 @@ def curse(screen):
         elif key_in == keys.add:
             screen.win.nodelay(False)
             curses.echo(True)
-            screen.win.addstr(screen.height - 1, 0, "add: ", curses.color_pair(101))
+            colors.print_str(screen.height - 1, 0, "<status.b>" + "add:" + "</status.b> ", screen.win, True)
             url = screen.win.getstr(screen.height - 1, 5, 200)
             try:
                 aria2.addUri([url.strip()])
             except pyaria2.xmlrpc.client.Fault:
-                screen.win.addstr(screen.height - 1, 0, "add: " + url.decode('utf-8'), curses.color_pair(2))
+                colors.print_str(screen.height - 1, 0, "<red>" + "add: " + url.decode('utf-8') + "</red>", screen.win, True)
                 screen.win.refresh()
                 time.sleep(1)
             curses.echo(False)

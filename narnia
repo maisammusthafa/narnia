@@ -1,5 +1,5 @@
 #!/bin/python
-import pyaria2
+import pyaria2, colors
 import argparse, configparser, curses, os, sys, time
 from socket import gaierror
 
@@ -120,17 +120,17 @@ class Window:
                                 )
 
                 if i_status == 'waiting':
-                    color = 5
-                elif i_status == 'complete':
-                    color = 3
-                elif i_status == 'removed':
                     color = 4
-                elif i_status == 'error':
+                elif i_status == 'complete':
                     color = 2
+                elif i_status == 'removed':
+                    color = 3
+                elif i_status == 'error':
+                    color = 1
                 elif i_status == 'paused':
-                    color = 11
+                    color = 10
                 else:
-                    color = 16
+                    color = 15
 
                 self.win.addstr(i + j + 1, 0, row, highlight[i]|curses.color_pair(color))
 
@@ -140,10 +140,11 @@ class Window:
                 if self.rows[i].num_files != 1:
                     for k in range(self.rows[i].num_files):
 
-                        f_name = "   " + os.path.basename(self.rows[i].data['files'][k]['path'])
+                        f_selected = self.rows[i].data['files'][k]['selected'].replace("true", "  * ").replace("false", "    ")
+                        f_name = f_selected + os.path.basename(self.rows[i].data['files'][k]['path'])
                         f_name = f_name[:(self.w_name - 5)] + ".." if len(f_name) > self.w_name - 5 else f_name
                         f_size = str("%0.2f" % (int(self.rows[i].data['files'][k]['length']) / 1048576)) + " MB"
-                        f_status = self.rows[i].data['files'][k]['selected'].replace("true", "   *   ").replace("false", "       ")
+                        f_status = self.rows[i].data['files'][k]['selected'].replace("true", "*").replace("false", " ")
                         if f_size != 0:
                             progress = int(self.rows[i].data['files'][k]['completedLength']) / int(self.rows[i].data['files'][k]['length']) * 100
                         else:
@@ -206,12 +207,8 @@ def curse(screen):
     screen.create()
 
     screen.win.clear()
-    curses.start_color()
-    curses.use_default_colors()
+    colors.init_colors()
     curses.curs_set(False)
-
-    for i in range(0, curses.COLORS):
-        curses.init_pair(i + 1, i, -1)
 
     curses.init_pair(100, 0, 36)
     curses.init_pair(101, 12, 0)

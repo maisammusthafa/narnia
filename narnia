@@ -48,7 +48,7 @@ class Window:
         self.y, self.x = y, x
         self.win = None
 
-        self.w_name = self.width - 70
+        self.w_name = self.width - 71
         self.w_size = ui.getint('width-size', 13)
         self.w_status = ui.getint('width-status', 11)
         self.w_progress = ui.getint('width-progress', 15)
@@ -57,14 +57,29 @@ class Window:
         self.w_eta = ui.getint('width-eta', 10)
 
         self.option = 0
-        self.rows = None
         self.num_rows = 0
         self.count = 0
+        self.highlight = []
+
+        self.t_string = ""
+        self.r_string = ""
+        self.s_string = ""
+
+        self.status_colors = {
+                'active':'<base3>',
+                'paused':'<default>',
+                'waiting':'<blue>',
+                'complete':'<green>',
+                'removed':'<yellow>',
+                'error':'<red>'
+                }
 
     def create(self):
         self.win = curses.newwin(self.height, self.width, self.y, self.x)
         self.win.nodelay(True)
         self.win.keypad(True)
+        self.refresh_header()
+        self.refresh_status()
 
     def create_row(self, *items):
         row = ""
@@ -72,108 +87,40 @@ class Window:
             row += (item[0] +  (item[1] - len(item[0])) * ' ')
         return row
 
+    def refresh_header(self):
+        t_name, t_size, t_status, t_progress, t_percent, t_dl, t_eta = "NAME", "SIZE", "STATUS", "PROGRESS", "", "DL", "ETA"
+
+        t_string = self.create_row(
+                (t_name, self.w_name),
+                (t_size, self.w_size),
+                (t_status, self.w_status),
+                (t_progress, self.w_progress),
+                (t_percent, self.w_percent),
+                (t_dl, self.w_dl),
+                (t_eta, self.w_eta)
+                )
+
+        self.t_string = "<header.b>" + t_string + "</header.b>"
+
+    def refresh_status(self):
+        s_server = "server: " + server + ":" + str(port)
+        s_string = self.create_row((s_server, self.width - 1))
+        self.s_string = "<status.b>" + s_string + "</status.b>"
+
     def draw(self):
         self.win.clear()
         time.sleep(0.01)
         self.count += 1
 
-        highlight = [0] * self.num_rows
-        highlight[self.option] = curses.A_REVERSE
+        self.highlight = [0] * self.num_rows
+        self.highlight[self.option] = curses.A_REVERSE
 
-        t_name, t_size, t_status, t_progress, t_percent, t_dl, t_eta = "NAME", "SIZE", "STATUS", "PROGRESS", "", "DL", "ETA"
-        t_string = self.create_row(
-                               (t_name, self.w_name),
-                               (t_size, self.w_size),
-                               (t_status, self.w_status),
-                               (t_progress, self.w_progress),
-                               (t_percent, self.w_percent),
-                               (t_dl, self.w_dl),
-                               (t_eta, self.w_eta)
-                             )
+        colors.print_str(0, 0, self.t_string, self.win, True)
 
-        colors.print_str(0, 0, "<header.b>" + t_string + "</header.b>", self.win, True)
+        get_rows(self)
+        colors.print_str(1, 0, self.r_string, self.win, True)
 
-
-        if len(self.rows) != 0:
-            j = 0
-            for i in range(self.num_rows):
-                if i > self.height - 3:
-                    break
-
-                i_name = self.rows[i].name
-                i_name = self.rows[i].name[:(self.w_name - 5)] + ".." if len(i_name) > self.w_name - 5 else i_name
-                i_size = str("%0.2f" % (self.rows[i].size / 1048576)) + " MB"
-                i_status = self.rows[i].status.replace("active", "active  ")
-                i_progress = ' ' * (self.w_progress - 1)
-                i_percent = str("%0.2f" % self.rows[i].progress) + "%"
-                i_dl = (str("%0.1f" % self.rows[i].dl) + " K").replace("0.0 K", "N/A")
-                i_eta = self.rows[i].eta
-
-                row = self.create_row(
-                                  (i_name, self.w_name),
-                                  (i_size, self.w_size),
-                                  (i_status, self.w_status),
-                                  (i_progress, self.w_progress),
-                                  (i_percent, self.w_percent),
-                                  (i_dl, self.w_dl),
-                                  (i_eta, self.w_eta)
-                                )
-
-                if i_status == 'waiting':
-                    color = '<blue>'
-                elif i_status == 'complete':
-                    color = '<green>'
-                elif i_status == 'removed':
-                    color = '<yellow>'
-                elif i_status == 'error':
-                    color = '<red>'
-                elif i_status == 'paused':
-                    color = '<default>'
-                else:
-                    color = '<base3>'
-
-                if highlight[i] != 0:
-                    color = color.replace('>', '.r>')
-
-                colors.print_str(i + j + 1, 0, color + row + color.replace('<', '</'), self.win, True)
-
-                i_progress = int((self.rows[i].progress) / 100 * (self.w_progress - 1)) * '█'
-                colors.print_str(i + j + 1, (self.w_name + self.w_size + self.w_status), color + i_progress + color.replace('<', '</'), self.win, True)
-
-                if self.rows[i].num_files != 1:
-                    for k in range(self.rows[i].num_files):
-
-                        f_selected = self.rows[i].data['files'][k]['selected'].replace("true", "  * ").replace("false", "    ")
-                        f_name = f_selected + os.path.basename(self.rows[i].data['files'][k]['path'])
-                        f_name = f_name[:(self.w_name - 5)] + ".." if len(f_name) > self.w_name - 5 else f_name
-                        f_size = str("%0.2f" % (int(self.rows[i].data['files'][k]['length']) / 1048576)) + " MB"
-                        f_status = self.rows[i].data['files'][k]['selected'].replace("true", "*").replace("false", " ")
-                        if f_size != 0:
-                            progress = int(self.rows[i].data['files'][k]['completedLength']) / int(self.rows[i].data['files'][k]['length']) * 100
-                        else:
-                            progress = 0
-
-                        f_progress = ' ' * (self.w_progress - 1)
-                        f_percent = str("%0.2f" % progress) + "%"
-
-                        f_row = self.create_row(
-                                          (f_name, self.w_name),
-                                          (f_size, self.w_size),
-                                          (f_status, self.w_status),
-                                          (f_progress, self.w_progress),
-                                          (f_percent, self.w_percent),
-                                        )
-
-                        color = '<default>'
-
-                        colors.print_str(i + j + k + 2, 0, color + f_row + color.replace('<', '</'), self.win, True)
-                        f_progress = int((progress) / 100 * (self.w_progress - 1)) * '█'
-                        colors.print_str(i + j + k + 2, (self.w_name + self.w_size + self.w_status), color + f_progress + color.replace('<', '</'), self.win, True)
-                    j += self.rows[i].num_files
-
-        s_server = "server: " + server + ":" + str(port)
-        s_string = self.create_row((s_server, self.width - 1))
-        colors.print_str(self.height - 1, 0, "<status.b>" + s_string + "</status.b>", self.win, True)
+        colors.print_str(self.height - 1, 0, self.s_string, self.win, True)
 
         self.win.refresh()
 
@@ -206,6 +153,74 @@ def get_downloads():
     return downloads
 
 
+def get_rows(screen):
+    screen.r_string = ""
+
+    if len(screen.rows) != 0:
+        j = 0
+        for i in range(screen.num_rows):
+            if i > screen.height - 3:
+                break
+
+            i_name = screen.rows[i].name
+            i_name = screen.rows[i].name[:(screen.w_name - 5)] + ".." if len(i_name) > screen.w_name - 5 else i_name
+            i_size = str("%0.2f" % (screen.rows[i].size / 1048576)) + " MB"
+            i_status = screen.rows[i].status
+            i_progress = int((screen.rows[i].progress) / 100 * (screen.w_progress - 1)) * '█'
+            i_percent = str("%0.2f" % screen.rows[i].progress) + "%"
+            i_dl = (str("%0.1f" % screen.rows[i].dl) + " K").replace("0.0 K", "N/A")
+            i_eta = screen.rows[i].eta
+
+            row = screen.create_row(
+                    (i_name, screen.w_name),
+                    (i_size, screen.w_size),
+                    (i_status, screen.w_status),
+                    (i_progress, screen.w_progress),
+                    (i_percent, screen.w_percent),
+                    (i_dl, screen.w_dl),
+                    (i_eta, screen.w_eta)
+                    )
+
+            color = screen.status_colors[i_status]
+
+            if screen.highlight[i] != 0:
+                color = color.replace('>', '.r>')
+
+            screen.r_string += color + row + color.replace('<', '</') + '\n'
+
+
+            if screen.rows[i].num_files > 1:
+                for k in range(screen.rows[i].num_files):
+
+                    f_selected = screen.rows[i].data['files'][k]['selected'].replace("true", "  * ").replace("false", "    ")
+                    f_name = f_selected + os.path.basename(screen.rows[i].data['files'][k]['path'])
+                    f_name = f_name[:(screen.w_name - 5)] + ".." if len(f_name) > screen.w_name - 5 else f_name
+                    f_size = str("%0.2f" % (int(screen.rows[i].data['files'][k]['length']) / 1048576)) + " MB"
+                    f_status = screen.rows[i].data['files'][k]['selected'].replace("true", "*").replace("false", " ")
+
+                    if f_size != 0:
+                        progress = int(screen.rows[i].data['files'][k]['completedLength']) / int(screen.rows[i].data['files'][k]['length']) * 100
+                    else:
+                        progress = 0
+
+                    f_progress = int((progress / 100) * (screen.w_progress - 1)) * '█'
+                    f_percent = str("%0.2f" % progress) + "%"
+
+                    f_row = screen.create_row(
+                            (f_name, screen.w_name),
+                            (f_size, screen.w_size),
+                            (f_status, screen.w_status),
+                            (f_progress, screen.w_progress),
+                            (f_percent, screen.w_percent),
+                            )
+
+                    color = color.replace('.r', '')
+
+                    screen.r_string += (color + f_row + color.replace('<', '</')) + '\n'
+                j += screen.rows[i].num_files
+
+
+
 def curse(screen):
     tty_h, tty_w = list(map(int, os.popen('stty size', 'r').read().split()))
     screen = Window(tty_h, tty_w, 0, 0)
@@ -225,6 +240,7 @@ def curse(screen):
         screen.num_rows = 1
 
     while True:
+
         screen.draw()
         key_in = screen.win.getch()
 
@@ -232,7 +248,9 @@ def curse(screen):
             tty_h, tty_w = list(map(int, os.popen('stty size', 'r').read().split()))
             screen.height = tty_h
             screen.width = tty_w
-            screen.w_name = screen.width - 70
+            screen.w_name = screen.width - 71
+            screen.refresh_header()
+            screen.refresh_status()
 
         elif key_in == curses.KEY_UP or key_in == keys.up:
             screen.option = (screen.option - 1) % screen.num_rows

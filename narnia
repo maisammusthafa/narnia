@@ -4,9 +4,10 @@ import argparse, configparser, curses, os, re, sys, time
 from socket import gaierror
 
 class Download:
+    rows = []
+    downloads = []
     num_rows = 0
     num_downloads = 0
-    ids = []
 
     def __init__(self, data):
         self.data = data
@@ -141,6 +142,12 @@ class Window:
 
         get_rows(self)
         cstr.add(1, 0, self.r_string, self.win, True)
+        # cstr.add(1, 0,
+                # self.r_string + "\n[debugging]\ngid: " +
+                # Download.rows[self.option]['gid'] + "\nindex: " +
+                # str(Download.rows[self.option]['index']) +
+                # "\nstatus: " + Download.rows[self.option]['status'],
+                # self.win, True)                                             # debugging
 
         cstr.add(self.height - 1, 0, self.s_string, self.win, True)
 
@@ -165,7 +172,7 @@ class Keybindings:
 def get_downloads():
     Download.num_rows = 0
     Download.num_downloads = 0
-    Download.ids = []
+    Download.rows = []
     downloads = []
     active = aria2.tellActive()
     waiting = aria2.tellWaiting(0, 100)
@@ -182,11 +189,12 @@ def get_downloads():
 def get_rows(screen):
     screen.r_string = ""
 
-    if len(screen.rows) != 0:
+    if Download.num_downloads != 0:
         j = 0
         for i in range(Download.num_downloads):
             if i > screen.height - 3:
                 break
+            item = Download.downloads[i]
 
             if screen.progress_markers != '':
                 marker_b = screen.progress_markers[0]
@@ -197,51 +205,46 @@ def get_rows(screen):
                 marker_e = ''
                 marker_p = 1
 
-            i_name = screen.rows[i].name
-            i_size = str("%0.2f" % (screen.rows[i].size / 1048576)) + " MB"
-            i_status = screen.rows[i].status
-
-            i_progress = int((screen.rows[i].progress) / 100 * (screen.w_progress - marker_p)) * screen.progress_char
-            i_progress = marker_b + i_progress + (screen.w_progress - len(i_progress) - marker_p) * ' ' + marker_e
-
-            i_percent = str("%0.2f" % screen.rows[i].progress) + "%"
-            i_dl = re.sub('^0.0 K', 'N/A', (str("%0.1f" % screen.rows[i].dl) + " K"))
-            i_eta = screen.rows[i].eta
+            d_name = item.name
+            d_size = str("%0.2f" % (item.size / 1048576)) + " MB"
+            d_status = item.status
+            d_progress = int((item.progress) / 100 * (screen.w_progress - marker_p)) * screen.progress_char
+            d_progress = marker_b + d_progress + (screen.w_progress - len(d_progress) - marker_p) * ' ' + marker_e
+            d_percent = str("%0.2f" % item.progress) + "%"
+            d_dl = re.sub('^0.0 K', 'N/A', (str("%0.1f" % item.dl) + " K"))
+            d_eta = item.eta
 
             row = screen.create_row(
-                    (i_name, screen.w_name, 5),
-                    (i_size, screen.w_size, 3),
-                    (i_status, screen.w_status, 3),
-                    (i_progress, screen.w_progress, 1),
-                    (i_percent, screen.w_percent, 3),
-                    (i_dl, screen.w_dl, 3),
-                    (i_eta, screen.w_eta, 2)
+                    (d_name, screen.w_name, 5),
+                    (d_size, screen.w_size, 3),
+                    (d_status, screen.w_status, 3),
+                    (d_progress, screen.w_progress, 1),
+                    (d_percent, screen.w_percent, 3),
+                    (d_dl, screen.w_dl, 3),
+                    (d_eta, screen.w_eta, 2)
                     )
 
-            color = screen.status_colors.get(i_status, '<default>')
+            color = screen.status_colors.get(d_status, '<default>')
 
             if screen.highlight[i + j] != 0:
                 color = color.replace('>', '.r>')
 
             screen.r_string += color + row + color.replace('<', '</') + '\n'
+            Download.rows.append({'gid':item.gid, 'index':-1, 'status':item.status})
 
-            Download.ids.append({'gid':screen.rows[i].gid, 'index':-1})
-
-
-            if screen.rows[i].num_files > 1:
-                for k in range(screen.rows[i].num_files):
-                    if k == screen.rows[i].num_files - 1:
+            if item.num_files > 1:
+                for k in range(item.num_files):
+                    if k == item.num_files - 1:
                         tree_char = "  └─ "
                     else:
                         tree_char = "  ├─ "
 
-                    f_selected = screen.rows[i].data['files'][k]['selected']
+                    f_selected = item.data['files'][k]['selected']
+                    f_name = tree_char + os.path.basename(item.data['files'][k]['path'])
+                    f_size = str("%0.2f" % (int(item.data['files'][k]['length']) / 1048576)) + " MB"
 
-                    f_name = tree_char + os.path.basename(screen.rows[i].data['files'][k]['path'])
-                    f_size = str("%0.2f" % (int(screen.rows[i].data['files'][k]['length']) / 1048576)) + " MB"
-
-                    if int(screen.rows[i].data['files'][k]['length']) != 0:
-                        progress = int(screen.rows[i].data['files'][k]['completedLength']) / int(screen.rows[i].data['files'][k]['length']) * 100
+                    if int(item.data['files'][k]['length']) != 0:
+                        progress = int(item.data['files'][k]['completedLength']) / int(item.data['files'][k]['length']) * 100
                     else:
                         progress = 0
 
@@ -253,14 +256,12 @@ def get_rows(screen):
                     else:
                         f_status = 'skip'
 
-                    if i_status == 'active' or i_status == 'waiting' or i_status == 'complete':
+                    if d_status == 'active' or d_status == 'waiting' or d_status == 'complete':
                         color = screen.status_colors.get(f_status, '<default>')
-
                     color = color.replace('.r', '')
 
                     f_progress = int((progress / 100) * (screen.w_progress - marker_p)) * screen.progress_char
                     f_progress = marker_b + f_progress + (screen.w_progress - len(f_progress) - marker_p) * ' ' + marker_e
-
                     f_percent = str("%0.2f" % progress) + "%"
 
                     f_row = screen.create_row(
@@ -275,15 +276,13 @@ def get_rows(screen):
                         color = color.replace('>', '.r>')
 
                     screen.r_string += (color + f_row + color.replace('<', '</')) + '\n'
+                    Download.rows.append({'gid':item.gid, 'index':k, 'status':item.status})
 
-                    Download.ids.append({'gid':screen.rows[i].gid, 'index':k})
-
-                j += screen.rows[i].num_files
+                j += item.num_files
 
 
 def key_actions(screen, key):
-    item = Download.ids[screen.option]
-    item['status'] = aria2.tellStatus(item['gid'])['status']
+    item = Download.rows[screen.option]
 
     def refresh_windows():
         tty_h, tty_w = list(map(int, os.popen('stty size', 'r').read().split()))
@@ -386,7 +385,7 @@ def curse(screen):
     cstr.init_colors()
     curses.curs_set(False)
 
-    screen.rows = get_downloads()
+    Download.downloads = get_downloads()
 
     if Download.num_rows == 0:
         Download.num_rows = 1
@@ -402,7 +401,7 @@ def curse(screen):
             screen.win.refresh()
 
         if screen.count == screen.refresh_marker:
-            screen.rows = get_downloads()
+            Download.downloads = get_downloads()
             screen.count = 0
 
 

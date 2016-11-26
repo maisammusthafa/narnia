@@ -4,6 +4,10 @@ import argparse, configparser, curses, os, re, sys, time
 from socket import gaierror
 
 class Download:
+    num_rows = 0
+    num_downloads = 0
+    ids = []
+
     def __init__(self, data):
         self.data = data
         self.gid = self.data['gid']
@@ -19,6 +23,12 @@ class Download:
 
         self.size = int(self.data['totalLength'])
         self.refresh()
+
+        if self.num_files > 1:
+            Download.num_rows += 1 + self.num_files
+        else:
+            Download.num_rows += 1
+        Download.num_downloads += 1
 
     def refresh(self):
         self.done = int(self.data['completedLength'])
@@ -61,7 +71,6 @@ class Window:
         self.w_eta = ui.getint('width-eta', 10)
 
         self.option = 0
-        self.num_rows = 0
         self.count = 0
         self.refresh_marker = ui.getfloat('refresh-interval', 0.5) / 0.01
         self.highlight = []
@@ -125,7 +134,7 @@ class Window:
         time.sleep(0.01)
         self.count += 1
 
-        self.highlight = [0] * self.num_rows
+        self.highlight = [0] * Download.num_rows
         self.highlight[self.option] = curses.A_REVERSE
 
         cstr.add(0, 0, self.t_string, self.win, True)
@@ -149,10 +158,14 @@ class Keybindings:
         self.purge = ord(keybindings.get('purge', 'D'))
         self.queue_up = ord(keybindings.get('queue-up', 'K'))
         self.queue_down = ord(keybindings.get('queue-down', 'J'))
+        self.select = ord(keybindings.get('select-file', 'v'))
         self.quit = ord(keybindings.get('quit', 'q'))
 
 
 def get_downloads():
+    Download.num_rows = 0
+    Download.num_downloads = 0
+    Download.ids = []
     downloads = []
     active = aria2.tellActive()
     waiting = aria2.tellWaiting(0, 100)
@@ -171,7 +184,7 @@ def get_rows(screen):
 
     if len(screen.rows) != 0:
         j = 0
-        for i in range(screen.num_rows):
+        for i in range(Download.num_downloads):
             if i > screen.height - 3:
                 break
 
@@ -207,10 +220,12 @@ def get_rows(screen):
 
             color = screen.status_colors.get(i_status, '<default>')
 
-            if screen.highlight[i] != 0:
+            if screen.highlight[i + j] != 0:
                 color = color.replace('>', '.r>')
 
             screen.r_string += color + row + color.replace('<', '</') + '\n'
+
+            Download.ids.append({'gid':screen.rows[i].gid, 'index':-1})
 
 
             if screen.rows[i].num_files > 1:
@@ -256,12 +271,20 @@ def get_rows(screen):
                             (f_percent, screen.w_percent, 3),
                             )
 
+                    if screen.highlight[i + j + k + 1] != 0:
+                        color = color.replace('>', '.r>')
+
                     screen.r_string += (color + f_row + color.replace('<', '</')) + '\n'
+
+                    Download.ids.append({'gid':screen.rows[i].gid, 'index':k})
 
                 j += screen.rows[i].num_files
 
 
 def key_actions(screen, key):
+    item = Download.ids[screen.option]
+    item['status'] = aria2.tellStatus(item['gid'])['status']
+
     def refresh_windows():
         tty_h, tty_w = list(map(int, os.popen('stty size', 'r').read().split()))
         screen.height = tty_h
@@ -271,10 +294,10 @@ def key_actions(screen, key):
         screen.refresh_status()
 
     def nav_up():
-        screen.option = (screen.option - 1) % screen.num_rows
+        screen.option = (screen.option - 1) % Download.num_rows
 
     def nav_down():
-        screen.option = (screen.option + 1) % screen.num_rows
+        screen.option = (screen.option + 1) % Download.num_rows
 
     def pause_all():
         if len(aria2.tellActive()) == 0:
@@ -283,10 +306,10 @@ def key_actions(screen, key):
             aria2.pauseAll()
 
     def pause():
-        if screen.rows[screen.option].status == 'active' or screen.rows[screen.option].status == 'waiting':
-            aria2.pause(screen.rows[screen.option].gid)
-        elif screen.rows[screen.option].status == 'paused':
-            aria2.unpause(screen.rows[screen.option].gid)
+        if item['status'] == 'active' or item['status'] == 'waiting':
+            aria2.pause(item['gid'])
+        elif item['status'] == 'paused':
+            aria2.unpause(item['gid'])
 
     def add():
         screen.win.nodelay(False)
@@ -304,25 +327,29 @@ def key_actions(screen, key):
         screen.win.refresh()
 
     def delete():
-        if screen.option == len(screen.rows) - 1:
+        if screen.option == Download.num_rows - 1:
             screen.option -= 1
         try:
-            aria2.remove(screen.rows[screen.option].gid)
+            aria2.remove(item['gid'])
         except:
-            aria2.removeDownloadResult(screen.rows[screen.option].gid)
+            aria2.removeDownloadResult(item['gid'])
 
     def purge():
         aria2.purgeDownloadResult()
 
     def queue_up():
-        if screen.rows[screen.option].status == 'waiting':
-            aria2.changePosition(screen.rows[screen.option].gid, -1, 'POS_CUR')
+        if item['status'] == 'waiting':
+            aria2.changePosition(item['gid'], -1, 'POS_CUR')
             screen.option -= 1
 
     def queue_down():
-        if screen.rows[screen.option].status == 'waiting':
-            aria2.changePosition(screen.rows[screen.option].gid, 1, 'POS_CUR')
+        if item['status'] == 'waiting':
+            aria2.changePosition(item['gid'], 1, 'POS_CUR')
             screen.option += 1
+
+    def select():
+        if item['index'] != -1:
+            aria2.changeOption(item['gid'], {'select-file': str(item['index'] + 1)})
 
     def quit():
         exit()
@@ -343,6 +370,7 @@ def key_actions(screen, key):
             keys.purge:purge,
             keys.queue_up:queue_up,
             keys.queue_down:queue_down,
+            keys.select:select,
             keys.quit:quit,
             }
 
@@ -359,10 +387,9 @@ def curse(screen):
     curses.curs_set(False)
 
     screen.rows = get_downloads()
-    screen.num_rows = len(screen.rows)
 
-    if screen.num_rows == 0:
-        screen.num_rows = 1
+    if Download.num_rows == 0:
+        Download.num_rows = 1
 
     while True:
         screen.draw()
@@ -376,7 +403,6 @@ def curse(screen):
 
         if screen.count == screen.refresh_marker:
             screen.rows = get_downloads()
-            screen.num_rows = len(screen.rows)
             screen.count = 0
 
 

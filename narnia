@@ -1,5 +1,5 @@
 #!/bin/python
-import pyaria2, colors
+import pyaria2, cstr
 import argparse, configparser, curses, os, sys, time
 from socket import gaierror
 
@@ -48,7 +48,7 @@ class Window:
         self.y, self.x = y, x
         self.win = None
 
-        self.enable_colors = ui.getboolean('colors', True)
+        self.enable_colors = colors.getboolean('colors', True)
         self.progress_markers = ui.get('progress-bar-markers', '[]')
         self.progress_char = ui.get('progress-bar-char', '#')
 
@@ -72,14 +72,14 @@ class Window:
 
         if self.enable_colors == True:
             self.status_colors = {
-                    'active':'<base3>',
-                    'paused':'<default>',
-                    'skip':'<default>',
-                    'waiting':'<blue>',
-                    'pending':'<blue>',
-                    'complete':'<green>',
-                    'removed':'<yellow>',
-                    'error':'<red>'
+                    'active':colors.get('dl-active', 'base3').join('<>'),
+                    'paused':colors.get('dl-paused', 'default').join('<>'),
+                    'skip':colors.get('dl-skip', 'default').join('<>'),
+                    'waiting':colors.get('dl-waiting', 'blue').join('<>'),
+                    'pending':colors.get('dl-pending', 'blue').join('<>'),
+                    'complete':colors.get('dl-complete', 'green').join('<>'),
+                    'removed':colors.get('dl-removed', 'yellow').join('<>'),
+                    'error':colors.get('dl-error', 'red').join('<>'),
                     }
         else:
             self.status_colors = {
@@ -127,12 +127,12 @@ class Window:
         self.highlight = [0] * self.num_rows
         self.highlight[self.option] = curses.A_REVERSE
 
-        colors.print_str(0, 0, self.t_string, self.win, True)
+        cstr.add(0, 0, self.t_string, self.win, True)
 
         get_rows(self)
-        colors.print_str(1, 0, self.r_string, self.win, True)
+        cstr.add(1, 0, self.r_string, self.win, True)
 
-        colors.print_str(self.height - 1, 0, self.s_string, self.win, True)
+        cstr.add(self.height - 1, 0, self.s_string, self.win, True)
 
         self.win.refresh()
 
@@ -283,12 +283,12 @@ def key_actions(screen, key):
     def add():
         screen.win.nodelay(False)
         curses.echo(True)
-        colors.print_str(screen.height - 1, 0, "<status.b>" + "add:" + "</status.b> ", screen.win, True)
+        cstr.add(screen.height - 1, 0, "<status.b>" + "add:" + "</status.b> ", screen.win, True)
         url = screen.win.getstr(screen.height - 1, 5, 200)
         try:
             aria2.addUri([url.strip()])
         except pyaria2.xmlrpc.client.Fault:
-            colors.print_str(screen.height - 1, 0, "<red>" + "add: " + url.decode('utf-8') + "</red>", screen.win, True)
+            cstr.add(screen.height - 1, 0, "<red>" + "add: " + url.decode('utf-8') + "</red>", screen.win, True)
             screen.win.refresh()
             time.sleep(1)
         curses.echo(False)
@@ -347,7 +347,7 @@ def curse(screen):
     screen.create()
 
     screen.win.clear()
-    colors.init_colors()
+    cstr.init_colors()
     curses.curs_set(False)
 
     screen.rows = get_downloads()
@@ -377,14 +377,14 @@ def exit():
 
 
 def main():
-    global aria2, ui, keys, server, port
+    global aria2, ui, colors, keys, server, port
 
     config = configparser.ConfigParser()
     config_file = os.path.expanduser("~/.config/narnia/config")
 
     if not os.path.isfile(config_file):
         import io
-        config_file = io.StringIO('[Connection]\n[UI]\n[Keybindings]')
+        config_file = io.StringIO('[Connection]\n[UI]\n[Colors]\n[Keybindings]')
         config.readfp(config_file)
     else:
         config.read(config_file)
@@ -405,6 +405,7 @@ def main():
         sys.exit()
 
     ui = config['UI']
+    colors = config['Colors']
     keys = Keybindings(config['Keybindings'])
 
     try:

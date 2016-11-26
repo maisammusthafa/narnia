@@ -23,7 +23,7 @@ def get_style(tag):
         return 0
 
 
-def print_str(y_start, x_start, color_str, in_screen, make_newlines_br):
+def add(y_start, x_start, color_str, in_screen, make_newlines_br):
     curr_color = get_style('default')
 
     x = x_start

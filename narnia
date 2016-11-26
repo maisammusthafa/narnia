@@ -69,7 +69,9 @@ class Window:
         self.status_colors = {
                 'active':'<base3>',
                 'paused':'<default>',
+                'skip':'<default>',
                 'waiting':'<blue>',
+                'pending':'<blue>',
                 'complete':'<green>',
                 'removed':'<yellow>',
                 'error':'<red>'
@@ -197,12 +199,23 @@ def get_rows(screen):
                     f_name = f_selected + os.path.basename(screen.rows[i].data['files'][k]['path'])
                     f_name = f_name[:(screen.w_name - 5)] + ".." if len(f_name) > screen.w_name - 5 else f_name
                     f_size = str("%0.2f" % (int(screen.rows[i].data['files'][k]['length']) / 1048576)) + " MB"
-                    f_status = screen.rows[i].data['files'][k]['selected'].replace("true", "*").replace("false", " ")
 
                     if f_size != 0:
                         progress = int(screen.rows[i].data['files'][k]['completedLength']) / int(screen.rows[i].data['files'][k]['length']) * 100
                     else:
                         progress = 0
+
+                    if progress == 100:
+                        f_status = 'complete'
+                        color = screen.status_colors[f_status]
+                    elif '*' in f_selected:
+                        f_status = 'pending'
+                    else:
+                        f_status = 'skip'
+
+                    if i_status == 'active' or i_status == 'waiting' or i_status == 'complete':
+                        color = screen.status_colors[f_status]
+                    color = color.replace('.r', '')
 
                     f_progress = int((progress / 100) * (screen.w_progress - 1)) * '█'
                     f_percent = str("%0.2f" % progress) + "%"
@@ -215,7 +228,6 @@ def get_rows(screen):
                             (f_percent, screen.w_percent),
                             )
 
-                    color = color.replace('.r', '')
 
                     screen.r_string += (color + f_row + color.replace('<', '</')) + '\n'
                 j += screen.rows[i].num_files
@@ -304,10 +316,9 @@ def key_actions(screen, key):
             keys.queue_up:queue_up,
             keys.queue_down:queue_down,
             keys.quit:quit,
-            -1:none
             }
 
-    actions[key]()
+    actions.get(key, none)()
 
 
 def curse(screen):

@@ -380,7 +380,14 @@ def main():
     global aria2, ui, keys, server, port
 
     config = configparser.ConfigParser()
-    config.read(os.path.expanduser("~/.config/aria2-console/config"))
+    config_file = os.path.expanduser("~/.config/narnia/config")
+
+    if not os.path.isfile(config_file):
+        import io
+        config_file = io.StringIO('[Connection]\n[UI]\n[Keybindings]')
+        config.readfp(config_file)
+    else:
+        config.read(config_file)
 
     server = config['Connection'].get('server', 'localhost')
     port = config['Connection'].getint('port', 6800)

@@ -187,7 +187,10 @@ def get_rows(screen):
             i_name = screen.rows[i].name
             i_size = str("%0.2f" % (screen.rows[i].size / 1048576)) + " MB"
             i_status = screen.rows[i].status
+
             i_progress = int((screen.rows[i].progress) / 100 * (screen.w_progress - marker_p)) * screen.progress_char
+            i_progress = marker_b + i_progress + (screen.w_progress - len(i_progress) - marker_p) * ' ' + marker_e
+
             i_percent = str("%0.2f" % screen.rows[i].progress) + "%"
             i_dl = re.sub('^0.0 K', 'N/A', (str("%0.1f" % screen.rows[i].dl) + " K"))
             i_eta = screen.rows[i].eta
@@ -196,7 +199,7 @@ def get_rows(screen):
                     (i_name, screen.w_name, 5),
                     (i_size, screen.w_size, 3),
                     (i_status, screen.w_status, 3),
-                    (i_progress, screen.w_progress, 3),
+                    (i_progress, screen.w_progress, 1),
                     (i_percent, screen.w_percent, 3),
                     (i_dl, screen.w_dl, 3),
                     (i_eta, screen.w_eta, 2)
@@ -212,10 +215,14 @@ def get_rows(screen):
 
             if screen.rows[i].num_files > 1:
                 for k in range(screen.rows[i].num_files):
+                    if k == screen.rows[i].num_files - 1:
+                        tree_char = "  └─ "
+                    else:
+                        tree_char = "  ├─ "
 
-                    f_selected = screen.rows[i].data['files'][k]['selected'].replace("true", "  * ").replace("false", "    ")
+                    f_selected = screen.rows[i].data['files'][k]['selected']
 
-                    f_name = f_selected + os.path.basename(screen.rows[i].data['files'][k]['path'])
+                    f_name = tree_char + os.path.basename(screen.rows[i].data['files'][k]['path'])
                     f_size = str("%0.2f" % (int(screen.rows[i].data['files'][k]['length']) / 1048576)) + " MB"
 
                     if int(screen.rows[i].data['files'][k]['length']) != 0:
@@ -226,7 +233,7 @@ def get_rows(screen):
                     if progress == 100:
                         f_status = 'complete'
                         color = screen.status_colors.get(f_status, '<default>')
-                    elif '*' in f_selected:
+                    elif f_selected == 'true':
                         f_status = 'pending'
                     else:
                         f_status = 'skip'
@@ -245,7 +252,7 @@ def get_rows(screen):
                             (f_name, screen.w_name, 5),
                             (f_size, screen.w_size, 3),
                             (f_status, screen.w_status, 3),
-                            (f_progress, screen.w_progress, 3),
+                            (f_progress, screen.w_progress, 1),
                             (f_percent, screen.w_percent, 3),
                             )
 

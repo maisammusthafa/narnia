@@ -282,7 +282,8 @@ def get_rows(screen):
 
 
 def key_actions(screen, key):
-    item = Download.rows[screen.option]
+    if Download.rows != []:
+        item = Download.rows[screen.option]
 
     def refresh_windows():
         tty_h, tty_w = list(map(int, os.popen('stty size', 'r').read().split()))
@@ -387,10 +388,10 @@ def curse(screen):
 
     Download.downloads = get_downloads()
 
-    if Download.num_rows == 0:
-        Download.num_rows = 1
-
     while True:
+        if Download.num_rows == 0:
+            Download.num_rows = 1
+
         screen.draw()
 
         key_in = screen.win.getch()

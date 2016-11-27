@@ -8,12 +8,15 @@ class Download:
     downloads = []
     num_rows = 0
     num_downloads = 0
+    expanded = {}
 
     def __init__(self, data):
         self.data = data
         self.gid = self.data['gid']
 
         self.num_files = len(self.data['files'])
+        if self.num_files > 1 and self.gid not in Download.expanded:
+            Download.expanded[self.gid] = False
 
         try:
             self.name = self.data['bittorrent']['info']['name']
@@ -25,7 +28,7 @@ class Download:
         self.size = int(self.data['totalLength'])
         self.refresh()
 
-        if self.num_files > 1:
+        if self.num_files > 1 and Download.expanded[self.gid] == True:
             Download.num_rows += 1 + self.num_files
         else:
             Download.num_rows += 1
@@ -82,7 +85,7 @@ class Window:
 
         if self.enable_colors == True:
             self.status_colors = {
-                    'active':colors.get('dl-active', 'base3').join('<>'),
+                    'active':colors.get('dl-active', 'base2').join('<>'),
                     'paused':colors.get('dl-paused', 'default').join('<>'),
                     'skip':colors.get('dl-skip', 'default').join('<>'),
                     'waiting':colors.get('dl-waiting', 'blue').join('<>'),
@@ -175,6 +178,7 @@ class Keybindings:
         self.queue_up = ord(keybindings.get('queue-up', 'K'))
         self.queue_down = ord(keybindings.get('queue-down', 'J'))
         self.select = ord(keybindings.get('select-file', 'v'))
+        self.expand = ord(keybindings.get('expand-torrent', 'h'))
         self.quit = ord(keybindings.get('quit', 'q'))
 
 
@@ -214,7 +218,12 @@ def get_rows(screen):
                 marker_e = ''
                 marker_p = 1
 
-            d_name = item.name
+            if item.num_files  > 1:
+                tree_node = '+ ' if Download.expanded[item.gid] == False else '- '
+            else:
+                tree_node = ''
+
+            d_name = tree_node + item.name
             d_size = str("%0.2f" % (item.size / 1048576)) + " MB"
             d_status = item.status
             d_progress = int((item.progress) / 100 * (screen.w_progress - marker_p)) * screen.progress_char
@@ -239,9 +248,9 @@ def get_rows(screen):
                 color = color.replace('>', '.r>')
 
             screen.r_string += color + row + color.replace('<', '</') + '\n'
-            Download.rows.append({'gid':item.gid, 'index':-1, 'status':item.status, 'selected':[]})
+            Download.rows.append({'gid':item.gid, 'index':(-2 if item.num_files > 1 else -1), 'status':item.status, 'selected':[]})
 
-            if item.num_files > 1:
+            if item.num_files > 1 and Download.expanded[item.gid] == True:
                 for k in range(item.num_files):
                     if k == item.num_files - 1:
                         tree_char = "  └─ "
@@ -345,6 +354,7 @@ def key_actions(screen, key):
             aria2.remove(item['gid'])
         except:
             aria2.removeDownloadResult(item['gid'])
+        del Download.expanded[item['gid']]
 
     def purge():
         aria2.purgeDownloadResult()
@@ -360,16 +370,26 @@ def key_actions(screen, key):
             screen.option += 1
 
     def select():
-        if item['index'] != -1:
-            selected = Download.rows[screen.option - item['index'] - 1]['selected']
+        if item['index'] < 0:
+            return
+        selected = Download.rows[screen.option - item['index'] - 1]['selected']
 
-            if item['index'] + 1 in selected:
-                selected.remove(item['index'] + 1)
-            else:
-                selected.append(item['index'] + 1)
+        if item['index'] + 1 in selected:
+            selected.remove(item['index'] + 1)
+        else:
+            selected.append(item['index'] + 1)
 
-            selection = ','.join(map(str, selected))
-            aria2.changeOption(item['gid'], {'select-file': selection})
+        selection = ','.join(map(str, selected))
+        aria2.changeOption(item['gid'], {'select-file': selection})
+
+    def expand():
+        if item['index'] == -1:
+            return
+        if Download.expanded[item['gid']] == True:
+            Download.expanded[item['gid']] = False
+            screen.option -= (item['index'] + 1) if item['index'] != -2 else 0
+        else:
+            Download.expanded[item['gid']] = True
 
 
     def quit():
@@ -392,6 +412,7 @@ def key_actions(screen, key):
             keys.queue_up:queue_up,
             keys.queue_down:queue_down,
             keys.select:select,
+            keys.expand:expand,
             keys.quit:quit,
             }
 

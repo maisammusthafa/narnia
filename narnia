@@ -141,13 +141,22 @@ class Window:
         cstr.add(0, 0, self.t_string, self.win, True)
 
         get_rows(self)
-        cstr.add(1, 0, self.r_string, self.win, True)
-        # cstr.add(1, 0,
-                # self.r_string + "\n[debugging]\ngid: " +
-                # Download.rows[self.option]['gid'] + "\nindex: " +
-                # str(Download.rows[self.option]['index']) +
-                # "\nstatus: " + Download.rows[self.option]['status'],
-                # self.win, True)                                             # debugging
+        # cstr.add(1, 0, self.r_string, self.win, True)
+        try:
+            cstr.add(1, 0,
+                    self.r_string + "\n[debugging]\ngid: " +
+                    Download.rows[self.option]['gid'] + "\nindex: " +
+                    str(Download.rows[self.option]['index']) +
+                    "\nstatus: " + Download.rows[self.option]['status'] +
+                    "\nselected: " + str(Download.rows[self.option - Download.rows[self.option]['index'] - 1]['selected']),
+                    self.win, True)                                             # debugging
+        except:
+            cstr.add(1, 0,
+                    self.r_string + "\n[debugging]\ngid: " +
+                    Download.rows[self.option]['gid'] + "\nindex: " +
+                    str(Download.rows[self.option]['index']) +
+                    "\nstatus: " + Download.rows[self.option]['status'],
+                    self.win, True)                                             # debugging
 
         cstr.add(self.height - 1, 0, self.s_string, self.win, True)
 
@@ -230,7 +239,7 @@ def get_rows(screen):
                 color = color.replace('>', '.r>')
 
             screen.r_string += color + row + color.replace('<', '</') + '\n'
-            Download.rows.append({'gid':item.gid, 'index':-1, 'status':item.status})
+            Download.rows.append({'gid':item.gid, 'index':-1, 'status':item.status, 'selected':[]})
 
             if item.num_files > 1:
                 for k in range(item.num_files):
@@ -276,7 +285,10 @@ def get_rows(screen):
                         color = color.replace('>', '.r>')
 
                     screen.r_string += (color + f_row + color.replace('<', '</')) + '\n'
-                    Download.rows.append({'gid':item.gid, 'index':k, 'status':item.status})
+
+                    Download.rows.append({'gid':item.gid, 'index':k, 'status':item.status, 'selected':[f_selected]})
+                    if k + 1 not in Download.rows[i + j]['selected'] and f_selected == 'true':
+                        Download.rows[i + j]['selected'].append(k + 1)
 
                 j += item.num_files
 
@@ -349,7 +361,16 @@ def key_actions(screen, key):
 
     def select():
         if item['index'] != -1:
-            aria2.changeOption(item['gid'], {'select-file': str(item['index'] + 1)})
+            selected = Download.rows[screen.option - item['index'] - 1]['selected']
+
+            if item['index'] + 1 in selected:
+                selected.remove(item['index'] + 1)
+            else:
+                selected.append(item['index'] + 1)
+
+            selection = ','.join(map(str, selected))
+            aria2.changeOption(item['gid'], {'select-file': selection})
+
 
     def quit():
         exit()

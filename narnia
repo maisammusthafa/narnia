@@ -23,7 +23,7 @@ class Download:
         except:
             self.name = os.path.basename(self.data['files'][0]['path'])
         if self.name == '':
-            self.name = "N/A"
+            self.name = 'N/A'
 
         self.size = int(self.data['totalLength'])
         self.refresh()
@@ -43,7 +43,14 @@ class Download:
         else:
             self.progress = 0
 
+        try:
+            self.seeds = int(self.data['numSeeders'])
+        except:
+            self.seeds = 0
+
+        self.peers = int(self.data['connections'])
         self.dl = int(self.data['downloadSpeed']) / 1024
+        self.ul = int(self.data['uploadSpeed']) / 1024
 
         if self.dl != 0:
             eta_s = (self.size - self.done) / (self.dl * 1024)
@@ -51,7 +58,7 @@ class Download:
             h, m = divmod(m, 60)
             self.eta = "%d:%02d:%02d" % (h, m, s)
         else:
-            self.eta = "N/A"
+            self.eta = "-"
 
         return self
 
@@ -66,13 +73,15 @@ class Window:
         self.progress_markers = ui.get('progress-bar-markers', '[]')
         self.progress_char = ui.get('progress-bar-char', '#')
 
-        self.w_name = self.width - 71
-        self.w_size = ui.getint('width-size', 13)
+        self.w_size = ui.getint('width-size', 10)
         self.w_status = ui.getint('width-status', 11)
         self.w_progress = ui.getint('width-progress', 15)
-        self.w_percent = ui.getint('width-percent', 1)
-        self.w_dl = ui.getint('width-dl', 11)
+        self.w_percent = ui.getint('width-percent', 10)
+        self.w_sp = ui.getint('width-seeds-peers', 10)
+        self.w_speed = ui.getint('width-speed', 16)
         self.w_eta = ui.getint('width-eta', 10)
+        self.w_name = self.width - (self.w_size + self.w_status + self.w_progress +
+                self.w_percent + self.w_sp + self.w_speed + self.w_eta + 1)
 
         self.option = 0
         self.count = 0
@@ -119,7 +128,8 @@ class Window:
         return row
 
     def refresh_header(self):
-        t_name, t_size, t_status, t_progress, t_percent, t_dl, t_eta = "NAME", "SIZE", "STATUS", "PROGRESS", "", "DL", "ETA"
+        t_name, t_size, t_status, t_progress, t_percent, t_sp, t_speed, t_eta = \
+        "NAME", "SIZE", "STATUS", "PROGRESS", "", "S/P", "DL/UL", "ETA"
 
         t_string = self.create_row(
                 (t_name, self.w_name, 3, 0),
@@ -127,8 +137,9 @@ class Window:
                 (t_status, self.w_status, 3, 0),
                 (t_progress, self.w_progress, 3, 0),
                 (t_percent, self.w_percent, 3, 0),
-                (t_dl, self.w_dl, 3, 0),
-                (t_eta, self.w_eta, 3, 0)
+                (t_sp, self.w_sp, 3, 1),
+                (t_speed, self.w_speed, 3, 1),
+                (t_eta, self.w_eta, 3, 1)
                 )
 
         self.t_string = "<header.b>" + t_string + "</header.b>"
@@ -242,7 +253,13 @@ def get_rows(screen):
             d_progress = int((item.progress) / 100 * (screen.w_progress - marker_p)) * screen.progress_char
             d_progress = marker_b + d_progress + (screen.w_progress - len(d_progress) - marker_p) * ' ' + marker_e
             d_percent = str("%0.2f" % item.progress) + "%"
-            d_dl = re.sub('^0.0 K', 'N/A', (str("%0.1f" % item.dl) + " K"))
+
+            d_sp = str(item.seeds) + "/" + str(item.peers)
+            d_sp = re.sub('0/0', '-', d_sp)
+
+            d_speed = str("%0.0f" % item.dl) + "K / " + str("%0.0f" % item.ul) + "K"
+            d_speed = re.sub(' / 0K', '', (re.sub('^0K', '-', d_speed)))
+
             d_eta = item.eta
 
             row = screen.create_row(
@@ -250,9 +267,10 @@ def get_rows(screen):
                     (d_size, screen.w_size, 3, 1),
                     (d_status, screen.w_status, 3, 0),
                     (d_progress, screen.w_progress, 1, 0),
-                    (d_percent, screen.w_percent, 3, 0),
-                    (d_dl, screen.w_dl, 3, 0),
-                    (d_eta, screen.w_eta, 2, 0)
+                    (d_percent, screen.w_percent, 3, 1),
+                    (d_sp, screen.w_sp, 3, 1),
+                    (d_speed, screen.w_speed, 3, 1),
+                    (d_eta, screen.w_eta, 2, 1)
                     )
 
             color = screen.status_colors.get(d_status, '<default>')
@@ -309,7 +327,7 @@ def get_rows(screen):
                             (f_size, screen.w_size, 3, 1),
                             (f_status, screen.w_status, 3, 0),
                             (f_progress, screen.w_progress, 1, 0),
-                            (f_percent, screen.w_percent, 3, 0),
+                            (f_percent, screen.w_percent, 3, 1),
                             )
 
                     if screen.highlight[i + j + k + 1] != 0:
@@ -332,7 +350,9 @@ def key_actions(screen, key):
         tty_h, tty_w = list(map(int, os.popen('stty size', 'r').read().split()))
         screen.height = tty_h
         screen.width = tty_w
-        screen.w_name = screen.width - 71
+        screen.w_name = screen.width - (screen.w_size + screen.w_status + screen.w_progress +
+                screen.w_percent + screen.w_sp + screen.w_speed + screen.w_eta + 1)
+
         screen.refresh_header()
         screen.refresh_status()
 
@@ -376,7 +396,7 @@ def key_actions(screen, key):
             aria2.remove(item['gid'])
         except:
             aria2.removeDownloadResult(item['gid'])
-        del Download.expanded[item['gid']]
+        # del Download.expanded[item['gid']]
 
     def purge():
         aria2.purgeDownloadResult()
@@ -496,7 +516,9 @@ def main():
     parser.add_argument('-a','--add', help='Add URL to download', required=False)
 
     args = parser.parse_args()
-    aria2 = pyaria2.PyAria2(args.server, args.port, None)
+    server = args.server
+    port = args.port
+    aria2 = pyaria2.PyAria2(server, port, None)
 
     if args.add != None:
         aria2.addUri([args.add])

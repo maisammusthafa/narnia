@@ -1,5 +1,5 @@
 #!/bin/python
-import pyaria2, cstr
+from narnia import pyaria2, cstr
 import argparse, configparser, curses, os, re, sys, time
 from socket import gaierror
 
@@ -171,12 +171,15 @@ class Window:
                     "\n\n" + str(create_tree(Download.downloads[self.option])),
                     self.win, True)                                             # debugging
         except:
-            cstr.add(1, 0,
-                    self.r_string + "\n[debugging]\ngid: " +
-                    Download.rows[self.option]['gid'] + "\nindex: " +
-                    str(Download.rows[self.option]['index']) +
-                    "\nstatus: " + Download.rows[self.option]['status'],
-                    self.win, True)                                             # debugging
+            try:
+                cstr.add(1, 0,
+                        self.r_string + "\n[debugging]\ngid: " +
+                        Download.rows[self.option]['gid'] + "\nindex: " +
+                        str(Download.rows[self.option]['index']) +
+                        "\nstatus: " + Download.rows[self.option]['status'],
+                        self.win, True)                                             # debugging
+            except:
+                pass
 
         cstr.add(self.height - 1, 0, self.s_string, self.win, True)
 
@@ -519,7 +522,7 @@ def main():
     server = config['Connection'].get('server', 'localhost')
     port = config['Connection'].getint('port', 6800)
 
-    parser = argparse.ArgumentParser(description='Curses-based console client for aria2')
+    parser = argparse.ArgumentParser(description='A curses-based console client for aria2')
     parser.add_argument('-s','--server', help='Server to connect to', default=server)
     parser.add_argument('-p','--port', help='Port to connect through', default=port)
     parser.add_argument('file', nargs='*')

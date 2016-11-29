@@ -167,7 +167,8 @@ class Window:
                     Download.rows[self.option]['gid'] + "\nindex: " +
                     str(Download.rows[self.option]['index']) +
                     "\nstatus: " + Download.rows[self.option]['status'] +
-                    "\nselected: " + str(Download.rows[self.option - Download.rows[self.option]['index'] - 1]['selected']),
+                    "\nselected: " + str(Download.rows[self.option - Download.rows[self.option]['index'] - 1]['selected']) +
+                    "\n\n" + str(create_tree(Download.downloads[self.option])),
                     self.win, True)                                             # debugging
         except:
             cstr.add(1, 0,
@@ -213,6 +214,14 @@ def get_downloads():
             downloads.append(Download(state[i]))
 
     return downloads
+
+
+def create_tree(item):
+    result = ''
+    for i in range(item.num_files):
+        f = item.data['files'][i]
+        result += f['path'].replace(item.data['dir'] + '/' + item.name, '') + "\n"
+    return result
 
 
 def get_rows(screen):
@@ -513,15 +522,16 @@ def main():
     parser = argparse.ArgumentParser(description='Curses-based console client for aria2')
     parser.add_argument('-s','--server', help='Server to connect to', default=server)
     parser.add_argument('-p','--port', help='Port to connect through', default=port)
-    parser.add_argument('-a','--add', help='Add URL to download', required=False)
+    parser.add_argument('file', nargs='*')
 
     args = parser.parse_args()
     server = args.server
     port = args.port
     aria2 = pyaria2.PyAria2(server, port, None)
 
-    if args.add != None:
-        aria2.addUri([args.add])
+    if args.file != []:
+        for i_file in args.file:
+            aria2.addUri([i_file])
         sys.exit()
 
     ui = config['UI']

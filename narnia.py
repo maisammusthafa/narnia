@@ -129,7 +129,7 @@ class Window:
 
     def refresh_header(self):
         t_name, t_size, t_status, t_progress, t_percent, t_sp, t_speed, t_eta = \
-        "NAME", "SIZE", "STATUS", "PROGRESS", "", "S/P", "DL/UL", "ETA"
+        "NAME", "SIZE", "STATUS", "PROGRESS", "", "S/P", "D/U", "ETA"
 
         t_string = self.create_row(
                 (t_name, self.w_name, 3, 0),
@@ -145,8 +145,15 @@ class Window:
         self.t_string = "<header.b>" + t_string + "</header.b>"
 
     def refresh_status(self):
-        s_server = "server: " + server + ":" + str(port)
-        s_string = self.create_row((s_server, self.width - 1, 3, 0))
+        s_server = 'server: ' + server + ':' + str(port) + ' ' + ('v' + aria2.getVersion()['version']).join('()')
+        s_downloads = 'downloads: ' + aria2.getGlobalStat()['numStopped'] + '/' + str(Download.num_downloads)
+        s_speed = 'D/U: ' + str("%0.0f" % (int(aria2.getGlobalStat()['downloadSpeed']) / 1024)) + 'K / ' + \
+                str("%0.0f" % (int(aria2.getGlobalStat()['uploadSpeed']) / 1024)) + 'K'
+
+        s_string = self.create_row((s_server, self.width - 21 - 21, 3, 0),      # resizing bug here
+                (s_downloads, 21, 3, 0),
+                (s_speed, 20, 1, 1)
+                )
         self.s_string = "<status.b>" + s_string + "</status.b>"
 
     def draw(self):
@@ -485,6 +492,7 @@ def curse(screen):
     curses.curs_set(False)
 
     Download.downloads = get_downloads()
+    screen.refresh_status()
 
     while True:
         if Download.num_rows == 0:
@@ -501,6 +509,7 @@ def curse(screen):
 
         if screen.count == screen.refresh_marker:
             Download.downloads = get_downloads()
+            screen.refresh_status()
             screen.count = 0
 
 

@@ -92,7 +92,7 @@ class Window:
         self.r_string = ""
         self.s_string = ""
 
-        self.suffixes = [(1024 ** 3, ' G'), (1024 ** 2, ' M'), (1024, ' K'), (1, ' B')]
+        self.suffixes = [(1024 ** 3, ' G'), (1024 ** 2, ' M'), (1024, ' K'), (1, ' B')]      # bug: value between 1000 and 1024
 
         if self.enable_colors == True:
             self.status_colors = {
@@ -164,9 +164,10 @@ class Window:
         self.highlight = [0] * Download.num_rows
         self.highlight[self.option] = curses.A_REVERSE
 
-        cstr.add(0, 0, self.t_string, self.win, True)
-
         get_rows(self)
+        self.refresh_status()
+
+        cstr.add(0, 0, self.t_string, self.win, True)
         cstr.add(1, 0, self.r_string, self.win, True)
         # try:
             # cstr.add(1, 0,
@@ -187,8 +188,9 @@ class Window:
                         # self.win, True)                                             # debugging
             # except:
                 # pass
-        selected_file = self.create_row((str(Download.rows[self.option]['name']), self.width, 3, 0))
-        cstr.add(self.height - 2, 0, selected_file, self.win, True)
+        if Download.num_downloads != 0:
+            selected_file = self.create_row((str(Download.rows[self.option]['name']), self.width, 3, 0))
+            cstr.add(self.height - 2, 0, selected_file, self.win, True)
 
         cstr.add(self.height - 1, 0, self.s_string, self.win, True)
 
@@ -492,7 +494,6 @@ def curse(screen):
     curses.curs_set(False)
 
     Download.downloads = get_downloads()
-    screen.refresh_status()
 
     while True:
         if Download.num_rows == 0:
@@ -509,7 +510,6 @@ def curse(screen):
 
         if screen.count == screen.refresh_marker:
             Download.downloads = get_downloads()
-            screen.refresh_status()
             screen.count = 0
 
 

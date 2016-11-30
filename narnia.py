@@ -160,26 +160,28 @@ class Window:
         cstr.add(0, 0, self.t_string, self.win, True)
 
         get_rows(self)
-        # cstr.add(1, 0, self.r_string, self.win, True)
-        try:
-            cstr.add(1, 0,
-                    self.r_string + "\n[debugging]\ngid: " +
-                    Download.rows[self.option]['gid'] + "\nindex: " +
-                    str(Download.rows[self.option]['index']) +
-                    "\nstatus: " + Download.rows[self.option]['status'] +
-                    "\nselected: " + str(Download.rows[self.option - Download.rows[self.option]['index'] - 1]['selected']) +
-                    "\n\n" + str(create_tree(Download.downloads[self.option])),
-                    self.win, True)                                             # debugging
-        except:
-            try:
-                cstr.add(1, 0,
-                        self.r_string + "\n[debugging]\ngid: " +
-                        Download.rows[self.option]['gid'] + "\nindex: " +
-                        str(Download.rows[self.option]['index']) +
-                        "\nstatus: " + Download.rows[self.option]['status'],
-                        self.win, True)                                             # debugging
-            except:
-                pass
+        cstr.add(1, 0, self.r_string, self.win, True)
+        # try:
+            # cstr.add(1, 0,
+                    # self.r_string + "\n[debugging]\ngid: " +
+                    # Download.rows[self.option]['gid'] + "\nindex: " +
+                    # str(Download.rows[self.option]['index']) +
+                    # "\nstatus: " + Download.rows[self.option]['status'] +
+                    # "\nselected: " + str(Download.rows[self.option - Download.rows[self.option]['index'] - 1]['selected']) +
+                    # "\n\n" + str(create_tree(Download.downloads[self.option])),
+                    # self.win, True)                                             # debugging
+        # except:
+            # try:
+                # cstr.add(1, 0,
+                        # self.r_string + "\n[debugging]\ngid: " +
+                        # Download.rows[self.option]['gid'] + "\nindex: " +
+                        # str(Download.rows[self.option]['index']) +
+                        # "\nstatus: " + Download.rows[self.option]['status'],
+                        # self.win, True)                                             # debugging
+            # except:
+                # pass
+        selected_file = self.create_row((str(Download.rows[self.option]['name']), self.width, 3, 0))
+        cstr.add(self.height - 2, 0, selected_file, self.win, True)
 
         cstr.add(self.height - 1, 0, self.s_string, self.win, True)
 
@@ -291,7 +293,7 @@ def get_rows(screen):
                 color = color.replace('>', '.r>')
 
             screen.r_string += color + row + color.replace('<', '</') + '\n'
-            Download.rows.append({'gid':item.gid, 'index':(-2 if item.num_files > 1 else -1), 'status':item.status, 'selected':[]})
+            Download.rows.append({'gid':item.gid, 'index':(-2 if item.num_files > 1 else -1), 'status':item.status, 'selected':[], 'name':item.name})
 
             if item.num_files > 1 and Download.expanded[item.gid] == True:
                 for k in range(item.num_files):
@@ -347,7 +349,7 @@ def get_rows(screen):
 
                     screen.r_string += (color + f_row + color.replace('<', '</')) + '\n'
 
-                    Download.rows.append({'gid':item.gid, 'index':k, 'status':item.status, 'selected':[f_selected]})
+                    Download.rows.append({'gid':item.gid, 'index':k, 'status':item.status, 'selected':[f_selected], 'name':f_name.replace(tree_char, '')})
                     if k + 1 not in Download.rows[i + j]['selected'] and f_selected == 'true':
                         Download.rows[i + j]['selected'].append(k + 1)
 

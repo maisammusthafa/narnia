@@ -379,6 +379,16 @@ def key_actions(screen, key):
         screen.refresh_header()
         screen.refresh_status()
 
+    def confirm():
+        screen.win.nodelay(False)
+        curses.echo(True)
+        cstr.add(screen.height - 1, 0, "<red.b>" + "confirm deletion: (Y/n)" + "</red.b> ", screen.win, True)
+        curses.echo(False)
+        response = screen.win.getch()
+        screen.win.nodelay(True)
+        screen.win.refresh()
+        return False if response == ord('n') else True
+
     def nav_up():
         screen.option = (screen.option - 1) % Download.num_rows
 
@@ -400,12 +410,12 @@ def key_actions(screen, key):
     def add():
         screen.win.nodelay(False)
         curses.echo(True)
-        cstr.add(screen.height - 1, 0, "<status.b>" + "add:" + "</status.b> ", screen.win, True)
+        cstr.add(screen.height - 1, 0, "<base3.b>" + "add:" + "</base3.b> ", screen.win, True)
         url = screen.win.getstr(screen.height - 1, 5, 200)
         try:
             aria2.addUri([url.strip()])
         except pyaria2.xmlrpc.client.Fault:
-            cstr.add(screen.height - 1, 0, "<red>" + "add: " + url.decode('utf-8') + "</red>", screen.win, True)
+            cstr.add(screen.height - 1, 0, "<red.b>" + "add:</red.b><red> " + url.decode('utf-8') + "</red>", screen.win, True)
             screen.win.refresh()
             time.sleep(1)
         curses.echo(False)
@@ -413,6 +423,8 @@ def key_actions(screen, key):
         screen.win.refresh()
 
     def delete():
+        if item['status'] != 'complete' and item['status'] != 'removed' and item['status'] != 'error' and confirm() == False:
+            return
         if screen.option == Download.num_rows - 1:
             screen.option -= 1
         try:

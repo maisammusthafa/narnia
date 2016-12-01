@@ -62,8 +62,8 @@ def init_colors():
     for i in range(16):
         curses.init_pair(i, i, -1)
 
-    curses.init_pair(100, 0, 36)
-    curses.init_pair(101, 12, 0)
+    curses.init_pair(100, 0, 6)
+    curses.init_pair(101, 11, 0)
 
     colors = {
               'red': 1,

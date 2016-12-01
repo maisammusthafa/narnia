@@ -165,7 +165,6 @@ class Window:
         self.highlight[self.option] = curses.A_REVERSE
 
         get_rows(self)
-        self.refresh_status()
 
         cstr.add(0, 0, self.t_string, self.win, True)
         cstr.add(1, 0, self.r_string, self.win, True)
@@ -446,7 +445,7 @@ def key_actions(screen, key):
             aria2.changePosition(item['gid'], 1, 'POS_CUR')
             screen.option += 1
 
-    def select():
+    def select():           # bug: doesn't select active downloads's files
         if item['index'] < 0:
             return
         selected = Download.rows[screen.option - item['index'] - 1]['selected']
@@ -522,6 +521,7 @@ def curse(screen):
 
         if screen.count == screen.refresh_marker:
             Download.downloads = get_downloads()
+            screen.refresh_status()
             screen.count = 0
 
 

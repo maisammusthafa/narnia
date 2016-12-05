@@ -7,3 +7,11 @@ def tellWaiting():
 def tellStopped():
     stopped = [{'uploadSpeed': '0', 'numPieces': '1', 'completedLength': '14629', 'files': [{'index': '1', 'completedLength': '14629', 'selected': 'true', 'path': '/home/pi/Downloads/[zooqle.com] Doctor Who 2005 Season 08 S08 Complete 720p WEB-DL x265 HEVC-PSA.torrent', 'uris': [{'status': 'used', 'uri': 'https://zooqle.com/download/p2rkp.torrent'}, {'status': 'waiting', 'uri': 'https://zooqle.com/download/p2rkp.torrent'}], 'length': '14629'}], 'status': 'complete', 'totalLength': '14629', 'errorMessage': '', 'pieceLength': '1048576', 'downloadSpeed': '0', 'connections': '0', 'followedBy': ['bb416bcd0e66669d'], 'gid': '6fe8a0d6200d25d0', 'dir': '/home/pi/Downloads', 'errorCode': '0', 'bitfield': '80', 'uploadLength': '0'}, {'uploadSpeed': '0', 'numPieces': '1', 'completedLength': '18016', 'files': [{'index': '1', 'completedLength': '18016', 'selected': 'true', 'path': '/home/pi/Downloads/[zooqle.com] Game of Thrones SEASON 05 S05 COMPLETE 720p 10bit BluRay 2CH x26.torrent', 'uris': [{'status': 'used', 'uri': 'https://zooqle.com/download/jrlwr.torrent'}, {'status': 'waiting', 'uri': 'https://zooqle.com/download/jrlwr.torrent'}], 'length': '18016'}], 'status': 'complete', 'totalLength': '18016', 'errorMessage': '', 'pieceLength': '1048576', 'downloadSpeed': '0', 'connections': '0', 'followedBy': ['06954a70c22ceb80'], 'gid': '85117755feaef997', 'dir': '/home/pi/Downloads', 'errorCode': '0', 'bitfield': '80', 'uploadLength': '0'}]
     return stopped
+
+def getVersion():
+    version_info = {'version': '1.27.1'}
+    return version_info
+
+def getGlobalStat():
+    stats = {'numStopped': '2', 'downloadSpeed': '65536', 'uploadSpeed': '32768'}
+    return stats

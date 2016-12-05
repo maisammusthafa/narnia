@@ -1,4 +1,4 @@
-#!/bin/python
+#!/usr/bin/env python
 import configparser, os
 
 class Keybindings:
@@ -16,6 +16,7 @@ class Keybindings:
         self.expand = ord(keybindings.get('expand-torrent', 'h'))
         self.quit = ord(keybindings.get('quit', 'q'))
 
+
 class Colors:
     def __init__(self, colors):
         self.active = colors.get('dl-active', 'base2').join('<>')
@@ -27,8 +28,9 @@ class Colors:
         self.removed = colors.get('dl-removed', 'yellow').join('<>')
         self.error = colors.get('dl-error', 'red').join('<>')
 
+
 class Widths:
-    def __init__(self, ui):
+    def __init__(self, ui, tty_w):
         self.size = ui.getint('width-size', 10)
         self.status = ui.getint('width-status', 11)
         self.progress = ui.getint('width-progress', 15)
@@ -36,6 +38,9 @@ class Widths:
         self.sp = ui.getint('width-seeds-peers', 10)
         self.speed = ui.getint('width-speed', 16)
         self.eta = ui.getint('width-eta', 10)
+        self.name = tty_w - (self.size + self.status + self.progress +
+                self.percent + self.sp + self.speed + self.eta + 1)
+
 
 class Config:
     config = configparser.ConfigParser()
@@ -49,6 +54,7 @@ class Config:
         config.read(config_file)
 
     ui = config['UI']
+    tty_h, tty_w = list(map(int, os.popen('stty size', 'r').read().split()))
 
     server = config['Connection'].get('server', 'localhost')
     port = config['Connection'].getint('port', 6800)
@@ -59,6 +65,18 @@ class Config:
 
     keys = Keybindings(config['Keybindings'])
     colors = Colors(config['Colors'])
-    widths = Widths(ui)
+    widths = Widths(ui, tty_w)
 
     suffixes = [(1024 ** 3, ' G'), (1024 ** 2, ' M'), (1024, ' K'), (1, ' B')]      # bug: value between 1000 and 1024
+
+
+def create_row(*fields):
+    row = ""
+    for field in fields:
+        value, width, padding, alignment = field[0], field[1], field[2], field[3]
+        value = value[:(width - padding)] + ".." if len(value) > width - padding else value
+        if alignment == 'right':
+            row += (value +  (width - len(value)) * ' ')
+        else:
+            row += ((width - len(value) - padding) * ' ' + value + padding * ' ')
+    return row

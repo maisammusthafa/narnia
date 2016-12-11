@@ -1,12 +1,15 @@
 #!/usr/bin/env python
-import os, re
+import os
+import re
+
 from common import Globals, Config, create_row
+
 
 class Download:
     num_downloads = 0
     w_name = Globals.tty_w - (Config.widths.size + Config.widths.status +
-            Config.widths.progress + Config.widths.percent +
-            Config.widths.sp + Config.widths.speed + Config.widths.eta)
+                              Config.widths.progress + Config.widths.percent +
+                              Config.widths.sp + Config.widths.speed + Config.widths.eta)
 
     def __init__(self, data):
         self.data = data
@@ -16,16 +19,17 @@ class Download:
 
         self.name = 'N/A'
         self.name = self.data['bittorrent']['info']['name'] if self.bt else \
-                os.path.basename(self.data['files'][0]['path'])
+            os.path.basename(self.data['files'][0]['path'])
 
         self.size = int(self.data['totalLength'])
+        self.row = None
         self.refresh()
 
 
     def refresh(self):
         self.done = int(self.data['completedLength'])
         self.status = self.data['status']
-        self.progress = (self.done / self.size) if self.size !=0 else 0
+        self.progress = (self.done / self.size) if self.size != 0 else 0
         self.seeds = int(self.data['numSeeders']) if self.bt else 0
         self.peers = int(self.data['connections'])
         self.dl = int(self.data['downloadSpeed'])
@@ -33,7 +37,6 @@ class Download:
         self.eta = (self.size - self.done) / (self.dl) if self.dl != 0 else -1
 
         self.format()
-
 
     def format(self):
         if Config.progress_markers != '':
@@ -45,7 +48,7 @@ class Download:
             marker_e = ''
             marker_p = 1
 
-        if self.num_files  > 1:
+        if self.num_files > 1:
             tree_node = '+ '
         else:
             tree_node = ''
@@ -80,11 +83,11 @@ class Download:
             d_eta = "-"
 
         self.row = create_row(
-                (d_name, Config.widths.name, 5, 'right'),
-                (d_size, Config.widths.size, 3, 'left'),
-                (d_status, Config.widths.status, 3, 'right'),
-                (d_progress, Config.widths.progress, 1, 'right'),
-                (d_percent, Config.widths.percent, 3, 'right'),
-                (d_sp, Config.widths.sp, 3, 'left'),
-                (d_speed, Config.widths.speed, 3, 'left'),
-                (d_eta, Config.widths.eta, 2, 'left'))
+            (d_name, Config.widths.name, 5, 'right'),
+            (d_size, Config.widths.size, 3, 'left'),
+            (d_status, Config.widths.status, 3, 'right'),
+            (d_progress, Config.widths.progress, 1, 'right'),
+            (d_percent, Config.widths.percent, 3, 'right'),
+            (d_sp, Config.widths.sp, 3, 'left'),
+            (d_speed, Config.widths.speed, 3, 'left'),
+            (d_eta, Config.widths.eta, 2, 'left'))

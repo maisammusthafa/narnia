@@ -1,24 +1,30 @@
 #!/usr/bin/env python
+import argparse
+import curses
+import os
+import sys
+import time
+from collections import defaultdict
+
 from common import Config, create_row
 from common import Globals as g
 from download import Download
-import argparse, curses, os, sys, time
-from collections import defaultdict
+
 
 def get_header():
     name, size, status, progress, percent, sp, speed, eta = \
-    "NAME", "SIZE", "STATUS", "PROGRESS", "", "S/P", "D/U", "ETA"
+        "NAME", "SIZE", "STATUS", "PROGRESS", "", "S/P", "D/U", "ETA"
 
     h_string = create_row(
-            (name, Config.widths.name, 3, 'right'),
-            (size, Config.widths.size, 3, 'left'),
-            (status, Config.widths.status, 3, 'right'),
-            (progress, Config.widths.progress, 3, 'right'),
-            (percent, Config.widths.percent, 3, 'right'),
-            (sp, Config.widths.sp, 3, 'left'),
-            (speed, Config.widths.speed, 3, 'left'),
-            (eta, Config.widths.eta, 3, 'left')
-            )
+        (name, Config.widths.name, 3, 'right'),
+        (size, Config.widths.size, 3, 'left'),
+        (status, Config.widths.status, 3, 'right'),
+        (progress, Config.widths.progress, 3, 'right'),
+        (percent, Config.widths.percent, 3, 'right'),
+        (sp, Config.widths.sp, 3, 'left'),
+        (speed, Config.widths.speed, 3, 'left'),
+        (eta, Config.widths.eta, 3, 'left')
+        )
 
     return h_string
 
@@ -27,12 +33,13 @@ def get_status():
     s_server = 'server: ' + Config.server + ':' + str(Config.port) + ' ' + ('v' + Config.aria2.getVersion()['version']).join('()')
     s_downloads = 'downloads: ' + Config.aria2.getGlobalStat()['numStopped'] + '/' + str(Download.num_downloads)
     s_speed = 'D/U: ' + str("%0.0f" % (int(Config.aria2.getGlobalStat()['downloadSpeed']) / 1024)) + 'K / ' + \
-            str("%0.0f" % (int(Config.aria2.getGlobalStat()['uploadSpeed']) / 1024)) + 'K'
+        str("%0.0f" % (int(Config.aria2.getGlobalStat()['uploadSpeed']) / 1024)) + 'K'
 
-    s_string = create_row((s_server, g.tty_w - 21 - 21, 3, 'right'),      # resizing bug here
-            (s_downloads, 21, 3, 'right'),
-            (s_speed, 20, 1, 'left')
-            )
+    s_string = create_row(
+        (s_server, g.tty_w - 21 - 21, 3, 'right'),      # resizing bug here
+        (s_downloads, 21, 3, 'right'),
+        (s_speed, 20, 1, 'left')
+        )
     return s_string
 
 
@@ -77,22 +84,22 @@ def key_actions(key):
         pass
 
     actions = {
-            curses.KEY_RESIZE:refresh_windows,
-            curses.KEY_UP:nav_up,
-            Config.keys.up:nav_up,
-            curses.KEY_DOWN:nav_down,
-            Config.keys.down:nav_down,
-            # keys.pause_all:pause_all,
-            # keys.pause:pause,
-            # keys.add:add,
-            # keys.delete:delete,
-            # keys.purge:purge,
-            # keys.queue_up:queue_up,
-            # keys.queue_down:queue_down,
-            # keys.select:select,
-            # keys.expand:expand,
-            Config.keys.quit:quit,
-            }
+        curses.KEY_RESIZE: refresh_windows,
+        curses.KEY_UP: nav_up,
+        Config.keys.up: nav_up,
+        curses.KEY_DOWN: nav_down,
+        Config.keys.down: nav_down,
+        # keys.pause_all: pause_all,
+        # keys.pause: pause,
+        # keys.add: add,
+        # keys.delete: delete,
+        # keys.purge: purge,
+        # keys.queue_up: queue_up,
+        # keys.queue_down: queue_down,
+        # keys.select: select,
+        # keys.expand: expand,
+        Config.keys.quit: quit,
+        }
 
     actions.get(key, none)()
 
@@ -140,7 +147,6 @@ def main(screen):
         for i in range(len(g.downloads)):
             rows[i].clear()
         g.status.clear()
-
 
     input()
 

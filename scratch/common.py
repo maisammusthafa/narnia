@@ -1,6 +1,9 @@
 #!/usr/bin/env python
+import configparser
+import os
+
 import pyaria2
-import configparser, os
+
 
 class Globals:
     tty_h, tty_w = list(map(int, os.popen('stty size', 'r').read().split()))
@@ -50,7 +53,7 @@ class Widths:
         self.speed = ui.getint('width-speed', 16)
         self.eta = ui.getint('width-eta', 10)
         self.name = Globals.tty_w - (self.size + self.status + self.progress +
-                self.percent + self.sp + self.speed + self.eta + 1)
+                                     self.percent + self.sp + self.speed + self.eta + 1)
 
 
 class Config:
@@ -85,7 +88,7 @@ def create_row(*fields):
         value, width, padding, alignment = field[0], field[1], field[2], field[3]
         value = value[:(width - padding)] + ".." if len(value) > width - padding else value
         if alignment == 'right':
-            row += (value +  (width - len(value)) * ' ')
+            row += (value + (width - len(value)) * ' ')
         else:
             row += ((width - len(value) - padding) * ' ' + value + padding * ' ')
     return row

@@ -69,8 +69,8 @@ def get_downloads():
     states = [active, waiting, stopped]
 
     for state in states:
-        for i in range(len(state)):
-            result.append(Download(state[i]))
+        for item in state:
+            result.append(Download(item))
 
     Download.num_downloads = len(result)
     return result
@@ -116,7 +116,7 @@ def key_actions(key):
         g.info[g.downloads[g.focused].gid]['highlight'] = 0
         g.focused = (g.focused + 1) % Download.num_downloads
 
-    def quit():
+    def end():
         """ quit """
 
         sys.exit()
@@ -141,7 +141,7 @@ def key_actions(key):
         # c.keys.queue_down: queue_down,
         # c.keys.select: select,
         # c.keys.expand: expand,
-        c.keys.quit: quit,
+        c.keys.quit: end,
         }
 
     actions.get(key, none)()

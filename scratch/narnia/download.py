@@ -28,10 +28,12 @@ class Download:
 
         self.size = int(self.data['totalLength'])
         self.row = None
-        self.refresh()
+        self.refresh(self.data)
 
-    def refresh(self):
+    def refresh(self, data):
         """ refresh values """
+
+        self.data = data
 
         self.done = int(self.data['completedLength'])
         self.status = self.data['status']
@@ -46,14 +48,14 @@ class Download:
         self.format()
 
     def format(self):
+        """ apply formatting to fields """
+
+        marker = {'begin': '', 'end': '', 'padding': 1}
+
         if c.progress_markers != '':
-            marker_b = c.progress_markers[0]
-            marker_e = c.progress_markers[1]
-            marker_p = 3
-        else:
-            marker_b = ''
-            marker_e = ''
-            marker_p = 1
+            marker['begin'] = c.progress_markers[0]
+            marker['end'] = c.progress_markers[1]
+            marker['padding'] = 3
 
         if self.num_files > 1:
             tree_node = '+ '
@@ -71,11 +73,11 @@ class Download:
         d_size = str("%0.1f" % (self.size / suffix[0])) + suffix[1]
         d_status = self.status
 
-        d_progress = int(self.progress * (c.widths.progress - marker_p)) * \
+        d_progress = int(self.progress * (c.widths.progress - marker['padding'])) * \
             c.progress_char
 
-        p_whitespaces = (c.widths.progress - len(d_progress) - marker_p) * ' '
-        d_progress = marker_b + d_progress + p_whitespaces + marker_e
+        p_whitespaces = (c.widths.progress - len(d_progress) - marker['padding']) * ' '
+        d_progress = marker['begin'] + d_progress + p_whitespaces + marker['end']
         d_percent = str("%0.2f" % (self.progress * 100)) + "%"
 
         d_sp = str(self.seeds) + "/" + str(self.peers)

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """ download """
 
+import curses
 import os
 import re
 
@@ -28,7 +29,13 @@ class Download:
 
         self.size = int(self.data['totalLength'])
         self.row = None
+        self.highlight = 0
+
         self.refresh(self.data)
+
+        self.win = curses.newwin(1, Globals.tty_w, 1, 0)
+        self.win.nodelay(True)
+        self.win.keypad(True)
 
     def refresh(self, data):
         """ refresh values """
@@ -73,11 +80,16 @@ class Download:
         d_size = str("%0.1f" % (self.size / suffix[0])) + suffix[1]
         d_status = self.status
 
-        d_progress = int(self.progress * (c.widths.progress - marker['padding'])) * \
+        d_progress = int(self.progress *
+                         (c.widths.progress - marker['padding'])) * \
             c.progress_char
 
-        p_whitespaces = (c.widths.progress - len(d_progress) - marker['padding']) * ' '
-        d_progress = marker['begin'] + d_progress + p_whitespaces + marker['end']
+        p_whitespaces = (c.widths.progress - len(d_progress) -
+                         marker['padding']) * ' '
+
+        d_progress = marker['begin'] + d_progress + \
+            p_whitespaces + marker['end']
+
         d_percent = str("%0.2f" % (self.progress * 100)) + "%"
 
         d_sp = str(self.seeds) + "/" + str(self.peers)
@@ -105,3 +117,11 @@ class Download:
             (d_sp, c.widths.seeds_peers, 3, 'left'),
             (d_speed, c.widths.speed, 3, 'left'),
             (d_eta, c.widths.eta, 2, 'left'))
+
+    def draw(self, y_pos):
+        """ draw the window """
+
+        self.win.clear()
+        self.win.mvwin(y_pos, 0)
+        self.win.addstr(0, 0, self.row, self.highlight)
+        self.win.refresh()

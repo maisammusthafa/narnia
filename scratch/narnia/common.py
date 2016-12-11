@@ -11,7 +11,6 @@ class Globals:
     tty_h, tty_w = list(map(int, os.popen('stty size', 'r').read().split()))
     suffixes = [(1024 ** 3, ' G'), (1024 ** 2, ' M'), (1024, ' K'), (1, ' B')]
     # bug: value between 1000 and 1024
-    info = {}
     downloads = []
     focused = 0
     header = None

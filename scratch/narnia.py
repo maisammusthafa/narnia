@@ -107,13 +107,13 @@ def key_actions(key):
     def nav_up():
         """ nav up """
 
-        g.info[g.downloads[g.focused].gid]['highlight'] = 0
+        g.downloads[g.focused].highlight = 0
         g.focused = (g.focused - 1) % Download.num_downloads
 
     def nav_down():
         """ nav down """
 
-        g.info[g.downloads[g.focused].gid]['highlight'] = 0
+        g.downloads[g.focused].highlight = 0
         g.focused = (g.focused + 1) % Download.num_downloads
 
     def end():
@@ -160,26 +160,12 @@ def main(screen):
         g.header.refresh()
 
         g.downloads = get_downloads()
+        g.downloads[g.focused].highlight = curses.A_REVERSE
 
-        rows = {}
-        for i in range(len(g.downloads)):
-            if g.downloads[i].gid not in g.info:
-                g.info[g.downloads[i].gid] = defaultdict(int)
-                g.info[g.downloads[i].gid]['bt'] = g.downloads[i].torrent
-
-            rows[i] = curses.newwin(1, g.tty_w, i + 1, 0)
-
-            rows[i].addstr(0, 0, g.downloads[i].row,
-                           g.info[g.downloads[i].gid]['highlight'])
-
-            rows[i].refresh()
-
-        g.info[g.downloads[g.focused].gid]['highlight'] = curses.A_REVERSE
+        for i in range(Download.num_downloads):
+            g.downloads[i].draw(i + 1)
 
         # dbg = curses.newwin(5, g.tty_w, g.tty_h - 20, 0)
-        # dbg.addstr(0, 0, '0: ', g.info[g.downloads[0].gid]['highlight'])
-        # dbg.addstr(1, 0, '1: ', g.info[g.downloads[1].gid]['highlight'])
-        # dbg.addstr(2, 0, '2: ', g.info[g.downloads[2].gid]['highlight'])
         # dbg.addstr(3, 0, '3: ', g.info[g.downloads[3].gid]['highlight'])
         # dbg.refresh()
 
@@ -192,8 +178,6 @@ def main(screen):
         key_actions(key_in)
 
         g.header.clear()
-        for i in range(len(g.downloads)):
-            rows[i].clear()
         g.status.clear()
 
     input()

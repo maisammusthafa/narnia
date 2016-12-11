@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 import os, re
-from common import Config, create_row
+from common import Globals, Config, create_row
 
 class Download:
     num_downloads = 0
-    w_name = Config.tty_w - (Config.widths.size + Config.widths.status +
+    w_name = Globals.tty_w - (Config.widths.size + Config.widths.status +
             Config.widths.progress + Config.widths.percent +
             Config.widths.sp + Config.widths.speed + Config.widths.eta)
 
@@ -12,7 +12,7 @@ class Download:
         self.data = data
         self.gid = self.data['gid']
         self.num_files = len(self.data['files'])
-        self.bt = True if 'bittorrent' in self.data else False
+        self.bt = True if ('bittorrent' in self.data and 'info' in self.data['bittorrent']) else False
 
         self.name = 'N/A'
         self.name = self.data['bittorrent']['info']['name'] if self.bt else \
@@ -20,8 +20,6 @@ class Download:
 
         self.size = int(self.data['totalLength'])
         self.refresh()
-
-        Download.num_downloads += 1
 
 
     def refresh(self):
@@ -54,7 +52,7 @@ class Download:
 
         d_name = tree_node + self.name
 
-        for item in Config.suffixes:
+        for item in Globals.suffixes:
             if self.size >= item[0]:
                 suffix = item
                 break

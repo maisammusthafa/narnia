@@ -1,5 +1,16 @@
 #!/usr/bin/env python
+import pyaria2
 import configparser, os
+
+class Globals:
+    tty_h, tty_w = list(map(int, os.popen('stty size', 'r').read().split()))
+    suffixes = [(1024 ** 3, ' G'), (1024 ** 2, ' M'), (1024, ' K'), (1, ' B')]      # bug: value between 1000 and 1024
+    info = {}
+    downloads = []
+    focused = 0
+    header = None
+    status = None
+
 
 class Keybindings:
     def __init__(self, keybindings):
@@ -30,7 +41,7 @@ class Colors:
 
 
 class Widths:
-    def __init__(self, ui, tty_w):
+    def __init__(self, ui):
         self.size = ui.getint('width-size', 10)
         self.status = ui.getint('width-status', 11)
         self.progress = ui.getint('width-progress', 15)
@@ -38,7 +49,7 @@ class Widths:
         self.sp = ui.getint('width-seeds-peers', 10)
         self.speed = ui.getint('width-speed', 16)
         self.eta = ui.getint('width-eta', 10)
-        self.name = tty_w - (self.size + self.status + self.progress +
+        self.name = Globals.tty_w - (self.size + self.status + self.progress +
                 self.percent + self.sp + self.speed + self.eta + 1)
 
 
@@ -54,10 +65,10 @@ class Config:
         config.read(config_file)
 
     ui = config['UI']
-    tty_h, tty_w = list(map(int, os.popen('stty size', 'r').read().split()))
 
     server = config['Connection'].get('server', 'localhost')
     port = config['Connection'].getint('port', 6800)
+    aria2 = pyaria2.PyAria2(server, port, None)
 
     refresh_interval = ui.getfloat('refresh-interval', 0.5)
     progress_markers = ui.get('progress-bar-markers', '[]')
@@ -65,9 +76,7 @@ class Config:
 
     keys = Keybindings(config['Keybindings'])
     colors = Colors(config['Colors'])
-    widths = Widths(ui, tty_w)
-
-    suffixes = [(1024 ** 3, ' G'), (1024 ** 2, ' M'), (1024, ' K'), (1, ' B')]      # bug: value between 1000 and 1024
+    widths = Widths(ui)
 
 
 def create_row(*fields):

@@ -61,19 +61,34 @@ def get_status():
 def get_downloads():
     """ get downloads and create classes """
 
-    result = []
+    # result = []
+    new = []
 
     active = c.aria2.tellActive()
     waiting = c.aria2.tellWaiting(0, 100)
     stopped = c.aria2.tellStopped(-1, 100)
     states = [active, waiting, stopped]
 
+    def lookup(query):
+        """ lookup downloads """
+
+        for item in g.downloads:
+            if item.gid == query:
+                return g.downloads.index(item)
+        return -1
+
     for state in states:
         for item in state:
-            result.append(Download(item))
+            new.append(item)
 
-    Download.num_downloads = len(result)
-    return result
+    for item in new:
+        index = lookup(item['gid'])
+        if index != -1:
+            g.downloads[index].refresh(item)
+        else:
+            g.downloads.append(Download(item))
+
+    Download.num_downloads = len(g.downloads)
 
 
 def refresh_header():
@@ -153,21 +168,26 @@ def main(screen):
     curses.curs_set(False)
     screen.nodelay(True)
     screen.keypad(True)
+    screen.getch()
 
     while True:
         g.header = curses.newwin(1, g.tty_w, 0, 0)
         g.header.addstr(0, 0, get_header(), curses.A_BOLD)
         g.header.refresh()
 
-        g.downloads = get_downloads()
+        # g.downloads = get_downloads()
+        get_downloads()
         g.downloads[g.focused].highlight = curses.A_REVERSE
 
         for i in range(Download.num_downloads):
             g.downloads[i].draw(i + 1)
 
-        # dbg = curses.newwin(5, g.tty_w, g.tty_h - 20, 0)
-        # dbg.addstr(3, 0, '3: ', g.info[g.downloads[3].gid]['highlight'])
-        # dbg.refresh()
+        dbg = curses.newwin(10, g.tty_w, g.tty_h - 20, 0)
+        string = ''
+        for d in g.downloads:
+            string += d.gid + '\n'
+        dbg.addstr(0, 0, string + '\n' + str(g.dbg))
+        dbg.refresh()
 
         g.status = curses.newwin(1, g.tty_w, g.tty_h - 1, 0)
         g.status.addstr(0, 0, get_status(), curses.A_BOLD)

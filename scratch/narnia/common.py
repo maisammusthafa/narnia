@@ -15,6 +15,7 @@ class Globals:
     focused = 0
     header = None
     status = None
+    dbg = 0
 
 
 class Keybindings:

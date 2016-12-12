@@ -34,6 +34,7 @@ class Download:
         self.refresh(self.data)
 
         self.win = curses.newwin(1, Globals.tty_w, 1, 0)
+        Globals.dbg += 1
         self.win.nodelay(True)
         self.win.keypad(True)
 

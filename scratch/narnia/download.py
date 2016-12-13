@@ -23,11 +23,6 @@ class Download:
         self.torrent = True if ('bittorrent' in self.data and
                                 'info' in self.data['bittorrent']) else False
 
-        self.name = 'N/A'
-        self.name = self.data['bittorrent']['info']['name'] if self.torrent \
-            else os.path.basename(self.data['files'][0]['path'])
-
-        self.size = int(self.data['totalLength'])
         self.row = None
         self.highlight = 0
 
@@ -43,6 +38,12 @@ class Download:
 
         self.data = data
 
+        self.name = self.data['bittorrent']['info']['name'] if self.torrent \
+            else os.path.basename(self.data['files'][0]['path'])
+        if self.name == '':
+            self.name = 'N/A'
+
+        self.size = int(self.data['totalLength'])
         self.done = int(self.data['completedLength'])
         self.status = self.data['status']
         self.progress = (self.done / self.size) if self.size != 0 else 0

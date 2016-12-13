@@ -61,8 +61,9 @@ def get_status():
 def get_downloads():
     """ get downloads and create classes """
 
-    # result = []
-    new = []
+    response = []
+    prev_downloads = list(g.downloads)
+    g.downloads = []
 
     active = c.aria2.tellActive()
     waiting = c.aria2.tellWaiting(0, 100)
@@ -72,21 +73,29 @@ def get_downloads():
     def lookup(query):
         """ lookup downloads """
 
-        for item in g.downloads:
+        for item in prev_downloads:
             if item.gid == query:
-                return g.downloads.index(item)
+                return prev_downloads.index(item)
         return -1
 
     for state in states:
         for item in state:
-            new.append(item)
+            response.append(item)
 
-    for item in new:
+    for item in response:
         index = lookup(item['gid'])
         if index != -1:
-            g.downloads[index].refresh(item)
+            prev_downloads[index].refresh(item)
+            g.downloads.append(prev_downloads[index])
         else:
             g.downloads.append(Download(item))
+
+    diff = len(prev_downloads) - len(g.downloads)
+
+    if diff != 0:
+        for item in prev_downloads[-diff:]:
+            item.win.clear()
+            item.win.refresh()
 
     Download.num_downloads = len(g.downloads)
 
@@ -175,17 +184,16 @@ def main(screen):
         g.header.addstr(0, 0, get_header(), curses.A_BOLD)
         g.header.refresh()
 
-        # g.downloads = get_downloads()
         get_downloads()
         g.downloads[g.focused].highlight = curses.A_REVERSE
 
         for i in range(Download.num_downloads):
             g.downloads[i].draw(i + 1)
 
-        dbg = curses.newwin(10, g.tty_w, g.tty_h - 20, 0)
+        dbg = curses.newwin(20, g.tty_w, g.tty_h - 20, 0)
         string = ''
-        for d in g.downloads:
-            string += d.gid + '\n'
+        for download in g.downloads:
+            string += download.gid + '\n'
         dbg.addstr(0, 0, string + '\n' + str(g.dbg))
         dbg.refresh()
 

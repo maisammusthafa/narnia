@@ -50,8 +50,9 @@ def get_status():
     s_speed = 'D/U: ' + str("%0.0f" % (dl_global / 1024)) + 'K / ' + \
         str("%0.0f" % (ul_global / 1024)) + 'K'
 
+    # TODO resizing bug here
     s_string = create_row(
-        (s_server, g.tty_w - 21 - 21, 3, 'right'),      # resizing bug here
+        (s_server, g.tty_w - 21 - 21, 3, 'right'),
         (s_downloads, 21, 3, 'right'),
         (s_speed, 20, 1, 'left')
         )
@@ -130,15 +131,18 @@ def key_actions(key):
 
     def nav_up():
         """ nav up """
+        # TODO implement nav_up on delete
 
-        g.downloads[g.focused].highlight = 0
-        g.focused = (g.focused - 1) % Download.num_downloads
+        g.focused.highlight = 0
+        g.focused = g.downloads[(g.downloads.index(g.focused) - 1) %
+                                Download.num_downloads]
 
     def nav_down():
         """ nav down """
 
-        g.downloads[g.focused].highlight = 0
-        g.focused = (g.focused + 1) % Download.num_downloads
+        g.focused.highlight = 0
+        g.focused = g.downloads[(g.downloads.index(g.focused) + 1) %
+                                Download.num_downloads]
 
     def end():
         """ quit """
@@ -185,7 +189,11 @@ def main(screen):
         g.header.refresh()
 
         get_downloads()
-        g.downloads[g.focused].highlight = curses.A_REVERSE
+
+        if g.focused is None:
+            g.focused = g.downloads[0]
+
+        g.focused.highlight = curses.A_REVERSE
 
         for i in range(Download.num_downloads):
             g.downloads[i].draw(i + 1)

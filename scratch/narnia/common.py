@@ -12,7 +12,7 @@ class Globals:
     suffixes = [(1024 ** 3, ' G'), (1024 ** 2, ' M'), (1024, ' K'), (1, ' B')]
     # bug: value between 1000 and 1024
     downloads = []
-    focused = 0
+    focused = None
     header = None
     status = None
     dbg = 0

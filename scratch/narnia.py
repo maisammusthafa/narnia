@@ -190,7 +190,7 @@ def main(screen):
 
         get_downloads()
 
-        if g.focused is None:
+        if g.focused not in g.downloads:
             g.focused = g.downloads[0]
 
         g.focused.highlight = curses.A_REVERSE

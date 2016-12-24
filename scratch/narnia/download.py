@@ -35,8 +35,12 @@ class Download:
     def refresh(self, data):
         """ refresh values """
 
-        self.data = data
+        if self.row is not None and \
+                Globals.prev_tty_w == Globals.tty_w and \
+                self.data == data:
+            return
 
+        self.data = data
         self.name = self.data['bittorrent']['info']['name'] if self.torrent \
             else os.path.basename(self.data['files'][0]['path'])
         if self.name == '':

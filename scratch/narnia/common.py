@@ -10,15 +10,20 @@ import narnia.pyaria2 as pyaria2
 
 class Globals:
     tty_h, tty_w = list(map(int, os.popen('stty size', 'r').read().split()))
+    prev_tty_w = tty_w
+
+    # TODO: bug when value between 1000 and 1024
     suffixes = [(1024 ** 3, ' G'), (1024 ** 2, ' M'), (1024, ' K'), (1, ' B')]
-    # bug: value between 1000 and 1024
+
+    header = None
+    status = None
+
     downloads = []
     num_downloads = 0
     focused = None
-    header = None
-    status = None
-    dbg = 0
+
     timer = 0
+    dbg = 0
 
 
 class Keybindings:

@@ -6,7 +6,6 @@ import curses
 import os
 import sys
 import time
-from collections import defaultdict
 
 from narnia.common import create_row, Header, Status
 from narnia.common import Config as c
@@ -142,6 +141,7 @@ def main(screen):
 
         if g.timer == c.refresh_interval * 100:
             get_downloads()
+            g.prev_tty_w = g.tty_w
             g.status.update()
             g.timer = 0
 
@@ -157,7 +157,7 @@ def main(screen):
         # string = ''
         # for download in g.downloads:
             # string += download.gid + '\n'
-        # dbg.addstr(0, 0, string + '\n' + str(g.dbg))
+        # dbg.addstr(0, 0, str(g.dbg))
         # dbg.refresh()
 
         g.status.draw()

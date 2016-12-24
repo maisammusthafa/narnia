@@ -16,6 +16,7 @@ class Globals:
     header = None
     status = None
     dbg = 0
+    timer = 0
 
 
 class Keybindings:
@@ -57,7 +58,7 @@ class Widths:
         self.eta = interface.getint('width-eta', 10)
         self.name = Globals.tty_w - (self.size + self.status + self.progress +
                                      self.percent + self.seeds_peers +
-                                     self.speed + self.eta + 1)
+                                     self.speed + self.eta + 0)
 
 
 class Config:

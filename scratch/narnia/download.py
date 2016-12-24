@@ -125,5 +125,8 @@ class Download:
 
         self.win.clear()
         self.win.mvwin(y_pos, 0)
-        self.win.addstr(0, 0, self.row, self.highlight)
+        try:
+            self.win.addstr(0, 0, self.row, self.highlight)
+        except curses.error:
+            pass
         self.win.refresh()

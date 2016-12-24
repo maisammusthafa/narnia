@@ -52,7 +52,7 @@ def get_status():
 
     # TODO resizing bug here
     s_string = create_row(
-        (s_server, g.tty_w - 21 - 21, 3, 'right'),
+        (s_server, g.tty_w - 21 - 20, 3, 'right'),
         (s_downloads, 21, 3, 'right'),
         (s_speed, 20, 1, 'left')
         )
@@ -125,9 +125,10 @@ def key_actions(key):
 
         c.widths.name = g.tty_w - (c.widths.size + c.widths.status +
                                    c.widths.progress + c.widths.percent +
-                                   c.widths.sp + c.widths.speed +
-                                   c.widths.eta + 1)
+                                   c.widths.seeds_peers + c.widths.speed +
+                                   c.widths.eta + 0)
         refresh_status()
+        g.timer = 19
 
     def nav_up():
         """ nav up """
@@ -183,12 +184,19 @@ def main(screen):
     screen.keypad(True)
     screen.getch()
 
+    get_downloads()
+
     while True:
         g.header = curses.newwin(1, g.tty_w, 0, 0)
-        g.header.addstr(0, 0, get_header(), curses.A_BOLD)
+        try:
+            g.header.addstr(0, 0, get_header(), curses.A_BOLD)
+        except:
+            pass
         g.header.refresh()
 
-        get_downloads()
+        if g.timer == 20:
+            get_downloads()
+            g.timer = 0
 
         if g.focused not in g.downloads:
             g.focused = g.downloads[0]
@@ -198,15 +206,18 @@ def main(screen):
         for i in range(Download.num_downloads):
             g.downloads[i].draw(i + 1)
 
-        dbg = curses.newwin(20, g.tty_w, g.tty_h - 20, 0)
-        string = ''
-        for download in g.downloads:
-            string += download.gid + '\n'
-        dbg.addstr(0, 0, string + '\n' + str(g.dbg))
-        dbg.refresh()
+        # dbg = curses.newwin(20, g.tty_w, g.tty_h - 20, 0)
+        # string = ''
+        # for download in g.downloads:
+            # string += download.gid + '\n'
+        # dbg.addstr(0, 0, string + '\n' + str(g.dbg))
+        # dbg.refresh()
 
         g.status = curses.newwin(1, g.tty_w, g.tty_h - 1, 0)
-        g.status.addstr(0, 0, get_status(), curses.A_BOLD)
+        try:
+            g.status.addstr(0, 0, get_status(), curses.A_BOLD)
+        except:
+            pass
         g.status.refresh()
 
         time.sleep(0.01)
@@ -215,6 +226,7 @@ def main(screen):
 
         g.header.clear()
         g.status.clear()
+        g.timer += 1
 
     input()
 

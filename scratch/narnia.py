@@ -8,55 +8,10 @@ import sys
 import time
 from collections import defaultdict
 
-from narnia.common import create_row
+from narnia.common import create_row, Header, Status
 from narnia.common import Config as c
 from narnia.common import Globals as g
 from narnia.download import Download
-
-
-def get_header():
-    """ generate header """
-
-    name, size, status, progress, percent, seeds_peers, speed, eta = \
-        "NAME", "SIZE", "STATUS", "PROGRESS", "", "S/P", "D/U", "ETA"
-
-    h_string = create_row(
-        (name, c.widths.name, 3, 'right'),
-        (size, c.widths.size, 3, 'left'),
-        (status, c.widths.status, 3, 'right'),
-        (progress, c.widths.progress, 3, 'right'),
-        (percent, c.widths.percent, 3, 'right'),
-        (seeds_peers, c.widths.seeds_peers, 3, 'left'),
-        (speed, c.widths.speed, 3, 'left'),
-        (eta, c.widths.eta, 3, 'left')
-        )
-
-    return h_string
-
-
-def get_status():
-    """ generate status bar """
-
-    s_server = 'server: ' + c.server + ':' + str(c.port) + \
-        ' ' + ('v' + c.aria2.getVersion()['version']).join('()')
-
-    s_downloads = 'downloads: ' + \
-        c.aria2.getGlobalStat()['numStopped'] + \
-        '/' + str(Download.num_downloads)
-
-    dl_global = int(c.aria2.getGlobalStat()['downloadSpeed'])
-    ul_global = int(c.aria2.getGlobalStat()['uploadSpeed'])
-
-    s_speed = 'D/U: ' + str("%0.0f" % (dl_global / 1024)) + 'K / ' + \
-        str("%0.0f" % (ul_global / 1024)) + 'K'
-
-    # TODO resizing bug here
-    s_string = create_row(
-        (s_server, g.tty_w - 21 - 20, 3, 'right'),
-        (s_downloads, 21, 3, 'right'),
-        (s_speed, 20, 1, 'left')
-        )
-    return s_string
 
 
 def get_downloads():
@@ -98,20 +53,7 @@ def get_downloads():
             item.win.clear()
             item.win.refresh()
 
-    Download.num_downloads = len(g.downloads)
-
-
-def refresh_header():
-    """ refresh header """
-
-    pass
-
-
-def refresh_status():
-    """ refresh status bar """
-
-    g.status.clear()
-    g.status.refresh()
+    g.num_downloads = len(g.downloads)
 
 
 def key_actions(key):
@@ -126,9 +68,15 @@ def key_actions(key):
         c.widths.name = g.tty_w - (c.widths.size + c.widths.status +
                                    c.widths.progress + c.widths.percent +
                                    c.widths.seeds_peers + c.widths.speed +
-                                   c.widths.eta + 0)
-        refresh_status()
-        g.timer = 19
+                                   c.widths.eta)
+
+        g.header.update()
+
+        g.status.win.clear()
+        g.status.win.refresh()
+        g.status.update()
+
+        g.timer = (c.refresh_interval * 100) - 1
 
     def nav_up():
         """ nav up """
@@ -136,14 +84,14 @@ def key_actions(key):
 
         g.focused.highlight = 0
         g.focused = g.downloads[(g.downloads.index(g.focused) - 1) %
-                                Download.num_downloads]
+                                g.num_downloads]
 
     def nav_down():
         """ nav down """
 
         g.focused.highlight = 0
         g.focused = g.downloads[(g.downloads.index(g.focused) + 1) %
-                                Download.num_downloads]
+                                g.num_downloads]
 
     def end():
         """ quit """
@@ -186,16 +134,15 @@ def main(screen):
 
     get_downloads()
 
-    while True:
-        g.header = curses.newwin(1, g.tty_w, 0, 0)
-        try:
-            g.header.addstr(0, 0, get_header(), curses.A_BOLD)
-        except:
-            pass
-        g.header.refresh()
+    g.header = Header()
+    g.status = Status()
 
-        if g.timer == 20:
+    while True:
+        g.header.draw()
+
+        if g.timer == c.refresh_interval * 100:
             get_downloads()
+            g.status.update()
             g.timer = 0
 
         if g.focused not in g.downloads:
@@ -203,7 +150,7 @@ def main(screen):
 
         g.focused.highlight = curses.A_REVERSE
 
-        for i in range(Download.num_downloads):
+        for i in range(g.num_downloads):
             g.downloads[i].draw(i + 1)
 
         # dbg = curses.newwin(20, g.tty_w, g.tty_h - 20, 0)
@@ -213,19 +160,12 @@ def main(screen):
         # dbg.addstr(0, 0, string + '\n' + str(g.dbg))
         # dbg.refresh()
 
-        g.status = curses.newwin(1, g.tty_w, g.tty_h - 1, 0)
-        try:
-            g.status.addstr(0, 0, get_status(), curses.A_BOLD)
-        except:
-            pass
-        g.status.refresh()
+        g.status.draw()
 
         time.sleep(0.01)
         key_in = screen.getch()
         key_actions(key_in)
 
-        g.header.clear()
-        g.status.clear()
         g.timer += 1
 
     input()

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """ common objects """
 
+import curses
 import configparser
 import os
 
@@ -12,6 +13,7 @@ class Globals:
     suffixes = [(1024 ** 3, ' G'), (1024 ** 2, ' M'), (1024, ' K'), (1, ' B')]
     # bug: value between 1000 and 1024
     downloads = []
+    num_downloads = 0
     focused = None
     header = None
     status = None
@@ -58,7 +60,7 @@ class Widths:
         self.eta = interface.getint('width-eta', 10)
         self.name = Globals.tty_w - (self.size + self.status + self.progress +
                                      self.percent + self.seeds_peers +
-                                     self.speed + self.eta + 0)
+                                     self.speed + self.eta)
 
 
 class Config:
@@ -106,3 +108,82 @@ def create_row(*fields):
                     value + padding * ' ')
 
     return row
+
+
+class Header:
+    """ header class """
+
+    def __init__(self):
+        self.update()
+
+    def update(self):
+        """ generate header """
+
+        self.win = curses.newwin(1, Globals.tty_w, 0, 0)
+
+        name, size, status, progress, percent, seeds_peers, speed, eta = \
+            "NAME", "SIZE", "STATUS", "PROGRESS", "", "S/P", "D/U", "ETA"
+
+        self.string = create_row(
+            (name, Config.widths.name, 3, 'right'),
+            (size, Config.widths.size, 3, 'left'),
+            (status, Config.widths.status, 3, 'right'),
+            (progress, Config.widths.progress, 3, 'right'),
+            (percent, Config.widths.percent, 3, 'right'),
+            (seeds_peers, Config.widths.seeds_peers, 3, 'left'),
+            (speed, Config.widths.speed, 3, 'left'),
+            (eta, Config.widths.eta, 1, 'left')
+            )
+
+    def draw(self):
+        """ draw header """
+
+        self.win.clear()
+        try:
+            self.win.addstr(0, 0, self.string, curses.A_BOLD)
+        except curses.error:
+            pass
+        self.win.refresh()
+
+
+class Status:
+    """ status class """
+
+    def __init__(self):
+        self.update()
+
+    def update(self):
+        """ generate status """
+
+        self.win = curses.newwin(1, Globals.tty_w, Globals.tty_h - 1, 0)
+
+        s_server = 'server: ' + Config.server + ':' + str(Config.port) + \
+            ' ' + ('v' + Config.aria2.getVersion()['version']).join('()')
+
+        s_downloads = 'downloads: ' + \
+            Config.aria2.getGlobalStat()['numStopped'] + \
+            '/' + str(Globals.num_downloads)
+
+        dl_global = int(Config.aria2.getGlobalStat()['downloadSpeed'])
+        ul_global = int(Config.aria2.getGlobalStat()['uploadSpeed'])
+
+        s_speed = 'D/U: ' + str("%0.0f" % (dl_global / 1024)) + 'K / ' + \
+            str("%0.0f" % (ul_global / 1024)) + 'K'
+
+        # TODO resizing bug here
+        self.string = create_row(
+            (s_server, Globals.tty_w - 21 - 20, 3, 'right'),
+            (s_downloads, 21, 3, 'right'),
+            (s_speed, 20, 1, 'left')
+            )
+
+    def draw(self):
+        """ draw status """
+
+        self.win.clear()
+        self.win.refresh()
+        try:
+            self.win.addstr(0, 0, self.string, curses.A_BOLD)
+        except curses.error:
+            pass
+        self.win.refresh()

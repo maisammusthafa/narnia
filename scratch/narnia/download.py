@@ -10,7 +10,6 @@ from narnia.common import Config as c
 
 
 class Download:
-    num_downloads = 0
     w_name = Globals.tty_w - (c.widths.size + c.widths.status +
                               c.widths.progress + c.widths.percent +
                               c.widths.seeds_peers + c.widths.speed +
@@ -118,7 +117,7 @@ class Download:
             (d_percent, c.widths.percent, 3, 'right'),
             (d_sp, c.widths.seeds_peers, 3, 'left'),
             (d_speed, c.widths.speed, 3, 'left'),
-            (d_eta, c.widths.eta, 2, 'left'))
+            (d_eta, c.widths.eta, 1, 'left'))
 
     def draw(self, y_pos):
         """ draw the window """

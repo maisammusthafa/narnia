@@ -130,7 +130,6 @@ class Download:
         """ draw the window """
 
         if self.changed or (self.highlight != self.prev_highlight):
-            Globals.dbg += 1
             self.prev_highlight = self.highlight
         else:
             return

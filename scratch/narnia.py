@@ -135,14 +135,13 @@ def main(screen):
 
     g.header = Header()
     g.status = Status()
+    g.header.draw(True)
+    g.status.draw(True)
 
     while True:
-        g.header.draw()
-
         if g.timer == c.refresh_interval * 100:
+            g.header.draw(False)
             get_downloads()
-            g.prev_tty_w = g.tty_w
-            g.status.update()
 
             if g.focused not in g.downloads:
                 g.focused = g.downloads[0]
@@ -151,13 +150,16 @@ def main(screen):
 
             for i in range(g.num_downloads):
                 g.downloads[i].draw(i + 1)
+
+            g.status.update()
+            g.status.draw(False)
+
+            g.prev_tty_w = g.tty_w
             g.timer = 0
 
         # dbg = curses.newwin(20, g.tty_w, g.tty_h - 20, 0)
         # dbg.addstr(0, 0, str(g.dbg))
         # dbg.refresh()
-
-        g.status.draw()
 
         time.sleep(0.01)
         g.timer += 1

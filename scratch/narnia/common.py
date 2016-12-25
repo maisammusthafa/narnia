@@ -12,7 +12,7 @@ class Globals:
     tty_h, tty_w = list(map(int, os.popen('stty size', 'r').read().split()))
     prev_tty_w = tty_w
 
-    # TODO: bug when value between 1000 and 1024
+    # TODO bug: incorrect when value between 1000 and 1024
     suffixes = [(1024 ** 3, ' G'), (1024 ** 2, ' M'), (1024, ' K'), (1, ' B')]
 
     header = None
@@ -140,8 +140,11 @@ class Header:
             (eta, Config.widths.eta, 1, 'left')
             )
 
-    def draw(self):
+    def draw(self, init):
         """ draw header """
+
+        if Globals.prev_tty_w == Globals.tty_w and not init:
+            return
 
         self.win.clear()
         try:
@@ -155,38 +158,53 @@ class Status:
     """ status class """
 
     def __init__(self):
+        self.data = Config.aria2.getGlobalStat()
+        self.string = None
         self.update()
 
     def update(self):
         """ generate status """
 
+        data = Config.aria2.getGlobalStat()
+
+        # TODO bug: doesn't update when tty height changed
+        if self.string is not None and \
+                Globals.prev_tty_w == Globals.tty_w and \
+                self.data == data:
+            self.changed = False
+            return
+
+        self.changed = True
+        self.data = data
         self.win = curses.newwin(1, Globals.tty_w, Globals.tty_h - 1, 0)
 
         s_server = 'server: ' + Config.server + ':' + str(Config.port) + \
             ' ' + ('v' + Config.aria2.getVersion()['version']).join('()')
 
-        s_downloads = 'downloads: ' + \
-            Config.aria2.getGlobalStat()['numStopped'] + \
+        s_downloads = 'downloads: ' + self.data['numStopped'] + \
             '/' + str(Globals.num_downloads)
 
-        dl_global = int(Config.aria2.getGlobalStat()['downloadSpeed'])
-        ul_global = int(Config.aria2.getGlobalStat()['uploadSpeed'])
+        dl_global = int(self.data['downloadSpeed'])
+        ul_global = int(self.data['uploadSpeed'])
 
         s_speed = 'D/U: ' + str("%0.0f" % (dl_global / 1024)) + 'K / ' + \
             str("%0.0f" % (ul_global / 1024)) + 'K'
 
-        # TODO resizing bug here
         self.string = create_row(
             (s_server, Globals.tty_w - 21 - 20, 3, 'right'),
             (s_downloads, 21, 3, 'right'),
             (s_speed, 20, 1, 'left')
             )
 
-    def draw(self):
+    def draw(self, init):
         """ draw status """
+
+        if not self.changed and not init:
+            return
 
         self.win.clear()
         self.win.refresh()
+
         try:
             self.win.addstr(0, 0, self.string, curses.A_BOLD)
         except curses.error:

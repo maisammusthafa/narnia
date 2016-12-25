@@ -131,7 +131,7 @@ def main(screen):
     screen.keypad(True)
     screen.getch()
 
-    get_downloads()
+    g.timer = c.refresh_interval * 100
 
     g.header = Header()
     g.status = Status()
@@ -143,30 +143,29 @@ def main(screen):
             get_downloads()
             g.prev_tty_w = g.tty_w
             g.status.update()
+
+            if g.focused not in g.downloads:
+                g.focused = g.downloads[0]
+
+            g.focused.highlight = curses.A_REVERSE
+
+            for i in range(g.num_downloads):
+                g.downloads[i].draw(i + 1)
             g.timer = 0
 
-        if g.focused not in g.downloads:
-            g.focused = g.downloads[0]
-
-        g.focused.highlight = curses.A_REVERSE
-
-        for i in range(g.num_downloads):
-            g.downloads[i].draw(i + 1)
-
         # dbg = curses.newwin(20, g.tty_w, g.tty_h - 20, 0)
-        # string = ''
-        # for download in g.downloads:
-            # string += download.gid + '\n'
         # dbg.addstr(0, 0, str(g.dbg))
         # dbg.refresh()
 
         g.status.draw()
 
         time.sleep(0.01)
-        key_in = screen.getch()
-        key_actions(key_in)
-
         g.timer += 1
+
+        key_in = screen.getch()
+        if key_in != -1:
+            g.timer = c.refresh_interval * 100
+        key_actions(key_in)
 
     input()
 

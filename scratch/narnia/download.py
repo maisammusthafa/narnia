@@ -24,11 +24,11 @@ class Download:
 
         self.row = None
         self.highlight = 0
+        self.prev_highlight = 0
 
         self.refresh(self.data)
 
         self.win = curses.newwin(1, Globals.tty_w, 1, 0)
-        Globals.dbg += 1
         self.win.nodelay(True)
         self.win.keypad(True)
 
@@ -38,7 +38,10 @@ class Download:
         if self.row is not None and \
                 Globals.prev_tty_w == Globals.tty_w and \
                 self.data == data:
+            self.changed = False
             return
+        else:
+            self.changed = True
 
         self.data = data
         self.name = self.data['bittorrent']['info']['name'] if self.torrent \
@@ -125,6 +128,12 @@ class Download:
 
     def draw(self, y_pos):
         """ draw the window """
+
+        if self.changed or (self.highlight != self.prev_highlight):
+            Globals.dbg += 1
+            self.prev_highlight = self.highlight
+        else:
+            return
 
         self.win.clear()
         self.win.mvwin(y_pos, 0)

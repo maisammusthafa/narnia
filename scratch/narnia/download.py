@@ -10,7 +10,7 @@ from narnia.common import Config as c
 
 
 class Download:
-    w_name = Globals.tty_w - (c.widths.size + c.widths.status +
+    w_name = Globals.tty['curr_w'] - (c.widths.size + c.widths.status +
                               c.widths.progress + c.widths.percent +
                               c.widths.seeds_peers + c.widths.speed +
                               c.widths.eta)
@@ -28,7 +28,7 @@ class Download:
 
         self.refresh(self.data)
 
-        self.win = curses.newwin(1, Globals.tty_w, 1, 0)
+        self.win = curses.newwin(1, Globals.tty['curr_w'], 1, 0)
         self.win.nodelay(True)
         self.win.keypad(True)
 
@@ -36,7 +36,7 @@ class Download:
         """ refresh values """
 
         if self.row is not None and \
-                Globals.prev_tty_w == Globals.tty_w and \
+                Globals.tty['prev_w'] == Globals.tty['curr_w'] and \
                 self.data == data:
             self.changed = False
             return

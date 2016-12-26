@@ -61,10 +61,10 @@ def key_actions(key):
     def refresh_windows():
         """ update window widths and refresh them """
 
-        tty_dims = list(map(int, os.popen('stty size', 'r').read().split()))
-        g.tty_h, g.tty_w = tty_dims
+        g.tty['curr_h'], g.tty['curr_w'] = list(map(
+            int, os.popen('stty size', 'r').read().split()))
 
-        c.widths.name = g.tty_w - (c.widths.size + c.widths.status +
+        c.widths.name = g.tty['curr_w'] - (c.widths.size + c.widths.status +
                                    c.widths.progress + c.widths.percent +
                                    c.widths.seeds_peers + c.widths.speed +
                                    c.widths.eta)
@@ -154,10 +154,11 @@ def main(screen):
             g.status.update()
             g.status.draw(False)
 
-            g.prev_tty_w = g.tty_w
+            g.tty['prev_h'] = g.tty['curr_h']
+            g.tty['prev_w'] = g.tty['curr_w']
             g.timer = 0
 
-        # dbg = curses.newwin(20, g.tty_w, g.tty_h - 20, 0)
+        # dbg = curses.newwin(20, g.tty['curr_w'], tty['curr_h'] - 20, 0)
         # dbg.addstr(0, 0, str(g.dbg))
         # dbg.refresh()
 

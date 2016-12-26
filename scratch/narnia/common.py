@@ -186,8 +186,10 @@ class Status:
         s_server = 'server: ' + Config.server + ':' + str(Config.port) + \
             ' ' + ('v' + Config.aria2.getVersion()['version']).join('()')
 
+        num_downloads = int(self.data['numActive']) + \
+            int(self.data['numWaiting']) + int(self.data['numStopped'])
         s_downloads = 'downloads: ' + self.data['numStopped'] + \
-            '/' + str(Globals.num_downloads)
+            '/' + str(num_downloads)
 
         dl_global = int(self.data['downloadSpeed'])
         ul_global = int(self.data['uploadSpeed'])

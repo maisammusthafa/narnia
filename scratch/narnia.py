@@ -120,7 +120,9 @@ def key_actions(key):
         c.keys.quit: end,
         }
 
-    actions.get(key, none)()
+    if g.num_downloads != 0 or \
+            key == c.keys.quit or key == curses.KEY_RESIZE:
+        actions.get(key, none)()
 
 
 def main(screen):
@@ -143,13 +145,14 @@ def main(screen):
             g.header.draw(False)
             get_downloads()
 
-            if g.focused not in g.downloads:
-                g.focused = g.downloads[0]
+            if g.num_downloads != 0:
+                if g.focused not in g.downloads:
+                    g.focused = g.downloads[0]
 
-            g.focused.highlight = curses.A_REVERSE
+                g.focused.highlight = curses.A_REVERSE
 
-            for i in range(g.num_downloads):
-                g.downloads[i].draw(i + 1)
+                for i in range(g.num_downloads):
+                    g.downloads[i].draw(i + 1)
 
             g.status.update()
             g.status.draw(False)

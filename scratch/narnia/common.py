@@ -16,7 +16,6 @@ class Globals:
     tty['prev_h'] = tty['curr_h']
     tty['prev_w'] = tty['curr_w']
 
-    # TODO bug: incorrect when value between 1000 and 1024
     suffixes = [(1024 ** 3, ' G'), (1024 ** 2, ' M'), (1024, ' K'), (1, ' B')]
 
     header = None

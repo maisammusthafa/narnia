@@ -155,7 +155,7 @@ class Header:
             self.win.addstr(0, 0, self.string, curses.A_BOLD)
         except curses.error:
             pass
-        self.win.refresh()
+        self.win.noutrefresh()
 
 
 class Status:
@@ -208,10 +208,10 @@ class Status:
             return
 
         self.win.clear()
-        self.win.refresh()
+        self.win.noutrefresh()
 
         try:
             self.win.addstr(0, 0, self.string, curses.A_BOLD)
         except curses.error:
             pass
-        self.win.refresh()
+        self.win.noutrefresh()

@@ -140,4 +140,4 @@ class Download:
             self.win.addstr(0, 0, self.row, self.highlight)
         except curses.error:
             pass
-        self.win.refresh()
+        self.win.noutrefresh()

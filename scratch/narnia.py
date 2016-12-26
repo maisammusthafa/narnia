@@ -50,7 +50,7 @@ def get_downloads():
     if diff != 0:
         for item in prev_downloads[-diff:]:
             item.win.clear()
-            item.win.refresh()
+            item.win.noutrefresh()
 
     g.num_downloads = len(g.downloads)
 
@@ -72,7 +72,7 @@ def key_actions(key):
         g.header.update()
 
         g.status.win.clear()
-        g.status.win.refresh()
+        g.status.win.noutrefresh()
         g.status.update()
 
         g.timer = (c.refresh_interval * 100) - 1
@@ -156,11 +156,13 @@ def main(screen):
 
             g.tty['prev_h'] = g.tty['curr_h']
             g.tty['prev_w'] = g.tty['curr_w']
+
+            curses.doupdate()
             g.timer = 0
 
         # dbg = curses.newwin(20, g.tty['curr_w'], tty['curr_h'] - 20, 0)
         # dbg.addstr(0, 0, str(g.dbg))
-        # dbg.refresh()
+        # dbg.noutrefresh()
 
         time.sleep(0.01)
         g.timer += 1

@@ -5,15 +5,15 @@ import curses
 import os
 import re
 
-from narnia.common import Globals, create_row
-from narnia.common import Config as c
+from narnia.common import Config as c, Globals as g
+from narnia.common import create_row
 
 
 class Download:
-    w_name = Globals.tty['curr_w'] - (c.widths.size + c.widths.status +
-                              c.widths.progress + c.widths.percent +
-                              c.widths.seeds_peers + c.widths.speed +
-                              c.widths.eta)
+    w_name = g.tty['curr_w'] - (c.widths.size + c.widths.status +
+                                c.widths.progress + c.widths.percent +
+                                c.widths.seeds_peers + c.widths.speed +
+                                c.widths.eta)
 
     def __init__(self, data):
         self.data = data
@@ -28,7 +28,7 @@ class Download:
 
         self.refresh(self.data)
 
-        self.win = curses.newwin(1, Globals.tty['curr_w'], 1, 0)
+        self.win = curses.newwin(1, g.tty['curr_w'], 1, 0)
         self.win.nodelay(True)
         self.win.keypad(True)
 
@@ -36,7 +36,7 @@ class Download:
         """ refresh values """
 
         if self.row is not None and \
-                Globals.tty['prev_w'] == Globals.tty['curr_w'] and \
+                g.tty['prev_w'] == g.tty['curr_w'] and \
                 self.data == data:
             self.changed = False
             return
@@ -79,13 +79,19 @@ class Download:
 
         d_name = tree_node + self.name
 
-        for item in Globals.suffixes:
+        size = 0
+        for item in g.suffixes:
             if self.size >= item[0]:
-                suffix = item
+                size = self.size / item[0]
+                if size > 999 and size < 1024:
+                    size /= 1024
+                    suffix = g.suffixes[g.suffixes.index(item) - 1][1]
+                    break
+                suffix = item[1]
                 break
-            suffix = item
+            suffix = item[1]
+        d_size = str("%0.1f" % size) + suffix
 
-        d_size = str("%0.1f" % (self.size / suffix[0])) + suffix[1]
         d_status = self.status
 
         d_progress = int(self.progress *
@@ -94,7 +100,6 @@ class Download:
 
         p_whitespaces = (c.widths.progress - len(d_progress) -
                          marker['padding']) * ' '
-
         d_progress = marker['begin'] + d_progress + \
             p_whitespaces + marker['end']
 
@@ -105,7 +110,6 @@ class Download:
 
         d_speed = str("%0.0f" % (self.dl_speed / 1024)) + "K / " + \
             str("%0.0f" % (self.ul_speed / 1024)) + "K"
-
         d_speed = re.sub(' / 0K', '', (re.sub('^0K', '-', d_speed)))
 
         if self.eta != -1:

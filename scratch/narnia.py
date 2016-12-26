@@ -7,9 +7,8 @@ import os
 import sys
 import time
 
+from narnia.common import Config as c, Globals as g
 from narnia.common import create_row, Header, Status
-from narnia.common import Config as c
-from narnia.common import Globals as g
 from narnia.download import Download
 
 
@@ -64,10 +63,11 @@ def key_actions(key):
         g.tty['curr_h'], g.tty['curr_w'] = list(map(
             int, os.popen('stty size', 'r').read().split()))
 
-        c.widths.name = g.tty['curr_w'] - (c.widths.size + c.widths.status +
-                                   c.widths.progress + c.widths.percent +
-                                   c.widths.seeds_peers + c.widths.speed +
-                                   c.widths.eta)
+        c.widths.name = g.tty['curr_w'] - \
+            (c.widths.size + c.widths.status +
+             c.widths.progress + c.widths.percent +
+             c.widths.seeds_peers + c.widths.speed +
+             c.widths.eta)
 
         g.header.update()
 

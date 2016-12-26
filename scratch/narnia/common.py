@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 """ common objects """
 
-import curses
 import configparser
+import curses
 import os
 
 import narnia.pyaria2 as pyaria2
@@ -28,6 +28,9 @@ class Globals:
 
     timer = 0
     dbg = 0
+
+
+g = Globals
 
 
 class Keybindings:
@@ -67,9 +70,10 @@ class Widths:
         self.seeds_peers = interface.getint('width-seeds-peers', 10)
         self.speed = interface.getint('width-speed', 16)
         self.eta = interface.getint('width-eta', 10)
-        self.name = Globals.tty['curr_w'] - (self.size + self.status + self.progress +
-                                     self.percent + self.seeds_peers +
-                                     self.speed + self.eta)
+        self.name = g.tty['curr_w'] - \
+            (self.size + self.status + self.progress +
+             self.percent + self.seeds_peers +
+             self.speed + self.eta)
 
 
 class Config:
@@ -128,7 +132,7 @@ class Header:
     def update(self):
         """ generate header """
 
-        self.win = curses.newwin(1, Globals.tty['curr_w'], 0, 0)
+        self.win = curses.newwin(1, g.tty['curr_w'], 0, 0)
 
         name, size, status, progress, percent, seeds_peers, speed, eta = \
             "NAME", "SIZE", "STATUS", "PROGRESS", "", "S/P", "D/U", "ETA"
@@ -147,7 +151,7 @@ class Header:
     def draw(self, init):
         """ draw header """
 
-        if Globals.tty['prev_w'] == Globals.tty['curr_w'] and not init:
+        if g.tty['prev_w'] == g.tty['curr_w'] and not init:
             return
 
         self.win.clear()
@@ -172,16 +176,16 @@ class Status:
         data = Config.aria2.getGlobalStat()
 
         if self.string is not None and \
-                Globals.tty['prev_h'] == Globals.tty['curr_h'] and \
-                Globals.tty['prev_w'] == Globals.tty['curr_w'] and \
+                g.tty['prev_h'] == g.tty['curr_h'] and \
+                g.tty['prev_w'] == g.tty['curr_w'] and \
                 self.data == data:
             self.changed = False
             return
 
         self.changed = True
         self.data = data
-        self.win = curses.newwin(1, Globals.tty['curr_w'],
-                                 Globals.tty['curr_h'] - 1, 0)
+        self.win = curses.newwin(1, g.tty['curr_w'],
+                                 g.tty['curr_h'] - 1, 0)
 
         s_server = 'server: ' + Config.server + ':' + str(Config.port) + \
             ' ' + ('v' + Config.aria2.getVersion()['version']).join('()')
@@ -198,7 +202,7 @@ class Status:
             str("%0.0f" % (ul_global / 1024)) + 'K'
 
         self.string = create_row(
-            (s_server, Globals.tty['curr_w'] - 21 - 20, 3, 'right'),
+            (s_server, g.tty['curr_w'] - 21 - 20, 3, 'right'),
             (s_downloads, 21, 3, 'right'),
             (s_speed, 20, 1, 'left')
             )

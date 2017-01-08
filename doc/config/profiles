@@ -1,0 +1,4 @@
+[default]
+server=localhost
+port=6800
+rpc-secret=

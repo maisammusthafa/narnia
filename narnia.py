@@ -533,7 +533,9 @@ def main():
     global aria2, ui, colors, keys, server, port, secret
 
     config = configparser.ConfigParser()
+    profiles = configparser.ConfigParser()
     config_file = os.path.expanduser("~/.config/narnia/config")
+    profiles_file = os.path.expanduser("~/.config/narnia/profiles")
 
     if not os.path.isfile(config_file):
         import io
@@ -542,18 +544,32 @@ def main():
     else:
         config.read(config_file)
 
-    server = config['Connection'].get('server', 'localhost')
-    port = config['Connection'].getint('port', 6800)
-    secret = 'token:' + config['Connection'].get('rpc-secret', '')
+    if not os.path.isfile(profiles_file):
+        import io
+        profiles_file = io.StringIO('[default]')
+        profiles.readfp(profiles_file)
+    else:
+        profiles.read(profiles_file)
+
+    profile = config['Connection'].get('profile', 'default')
 
     parser = argparse.ArgumentParser(description='A curses-based console client for aria2')
-    parser.add_argument('-s','--server', help='Server to connect to', default=server)
-    parser.add_argument('-p','--port', help='Port to connect through', default=port)
+    parser.add_argument('-c','--connection', help='Pre-configured narnia connection profile to use', default=profile)
+    parser.add_argument('-s','--server', help='Server to connect to')
+    parser.add_argument('-p','--port', help='Port to connect through')
+    parser.add_argument('-t','--token', help='aria2 RPC secret token')
     parser.add_argument('file', nargs='*')
 
     args = parser.parse_args()
-    server = args.server
-    port = args.port
+    profile = args.connection
+
+    server = profiles[profile].get('server', 'localhost') if args.server is None else \
+        args.server
+    port = profiles[profile].getint('port', 6800) if args.port is None else \
+        int(args.port)
+    secret = 'token:' + profiles[profile].get('rpc-secret', '') if args.token is None else \
+        'token:' + args.token
+
     aria2 = pyaria2.PyAria2(server, port, None)
 
     if args.file != []:

@@ -145,10 +145,10 @@ class Window:
         self.t_string = "<header.b>" + t_string + "</header.b>"
 
     def refresh_status(self):
-        s_server = 'server: ' + server + ':' + str(port) + ' ' + ('v' + aria2.getVersion()['version']).join('()')
-        s_downloads = 'downloads: ' + aria2.getGlobalStat()['numStopped'] + '/' + str(Download.num_downloads)
-        s_speed = 'D/U: ' + str("%0.0f" % (int(aria2.getGlobalStat()['downloadSpeed']) / 1024)) + 'K / ' + \
-                str("%0.0f" % (int(aria2.getGlobalStat()['uploadSpeed']) / 1024)) + 'K'
+        s_server = 'server: ' + server + ':' + str(port) + ' ' + ('v' + aria2.getVersion(secret)['version']).join('()')
+        s_downloads = 'downloads: ' + aria2.getGlobalStat(secret)['numStopped'] + '/' + str(Download.num_downloads)
+        s_speed = 'D/U: ' + str("%0.0f" % (int(aria2.getGlobalStat(secret)['downloadSpeed']) / 1024)) + 'K / ' + \
+                str("%0.0f" % (int(aria2.getGlobalStat(secret)['uploadSpeed']) / 1024)) + 'K'
 
         s_string = self.create_row((s_server, self.width - 21 - 21, 3, 0),      # resizing bug here
                 (s_downloads, 21, 3, 0),
@@ -217,9 +217,9 @@ def get_downloads():
     Download.num_downloads = 0
     Download.rows = []
     downloads = []
-    active = aria2.tellActive()
-    waiting = aria2.tellWaiting(0, 100)
-    stopped = aria2.tellStopped(-1, 100)
+    active = aria2.tellActive(secret)
+    waiting = aria2.tellWaiting(secret, 0, 100)
+    stopped = aria2.tellStopped(secret, -1, 100)
     states = [active, waiting, stopped]
 
     for state in states:
@@ -395,16 +395,16 @@ def key_actions(screen, key):
         screen.option = (screen.option + 1) % Download.num_rows
 
     def pause_all():
-        if len(aria2.tellActive()) == 0:
-            aria2.unpauseAll()
+        if len(aria2.tellActive(secret)) == 0:
+            aria2.unpauseAll(secret)
         else:
-            aria2.pauseAll()
+            aria2.pauseAll(secret)
 
     def pause():
         if item['status'] == 'active' or item['status'] == 'waiting':
-            aria2.pause(item['gid'])
+            aria2.pause(secret, item['gid'])
         elif item['status'] == 'paused':
-            aria2.unpause(item['gid'])
+            aria2.unpause(secret, item['gid'])
 
     def add():
         screen.win.nodelay(False)
@@ -412,7 +412,7 @@ def key_actions(screen, key):
         cstr.add(screen.height - 1, 0, "<base3.b>" + "add:" + "</base3.b> ", screen.win, True)
         url = screen.win.getstr(screen.height - 1, 5, 200)
         try:
-            aria2.addUri([url.strip()])
+            aria2.addUri(secret, [url.strip()])
         except pyaria2.xmlrpc.client.Fault:
             cstr.add(screen.height - 1, 0, "<red.b>" + "add:</red.b><red> " + url.decode('utf-8') + "</red>", screen.win, True)
             screen.win.refresh()
@@ -427,22 +427,22 @@ def key_actions(screen, key):
         if screen.option == Download.num_rows - 1:
             screen.option -= 1
         try:
-            aria2.remove(item['gid'])
+            aria2.remove(secret, item['gid'])
         except:
-            aria2.removeDownloadResult(item['gid'])
+            aria2.removeDownloadResult(secret, item['gid'])
         # del Download.expanded[item['gid']]
 
     def purge():
-        aria2.purgeDownloadResult()
+        aria2.purgeDownloadResult(secret)
 
     def queue_up():
         if item['status'] == 'waiting':
-            aria2.changePosition(item['gid'], -1, 'POS_CUR')
+            aria2.changePosition(secret, item['gid'], -1, 'POS_CUR')
             screen.option -= 1
 
     def queue_down():
         if item['status'] == 'waiting':
-            aria2.changePosition(item['gid'], 1, 'POS_CUR')
+            aria2.changePosition(secret, item['gid'], 1, 'POS_CUR')
             screen.option += 1
 
     def select():           # bug: doesn't select active downloads's files
@@ -456,7 +456,7 @@ def key_actions(screen, key):
             selected.append(item['index'] + 1)
 
         selection = ','.join(map(str, selected))
-        aria2.changeOption(item['gid'], {'select-file': selection})
+        aria2.changeOption(secret, item['gid'], {'select-file': selection})
 
     def expand():
         if item['index'] == -1:
@@ -530,7 +530,7 @@ def exit():
 
 
 def main():
-    global aria2, ui, colors, keys, server, port
+    global aria2, ui, colors, keys, server, port, secret
 
     config = configparser.ConfigParser()
     config_file = os.path.expanduser("~/.config/narnia/config")
@@ -544,6 +544,7 @@ def main():
 
     server = config['Connection'].get('server', 'localhost')
     port = config['Connection'].getint('port', 6800)
+    secret = 'token:' + config['Connection'].get('rpc-secret', '')
 
     parser = argparse.ArgumentParser(description='A curses-based console client for aria2')
     parser.add_argument('-s','--server', help='Server to connect to', default=server)
@@ -557,7 +558,7 @@ def main():
 
     if args.file != []:
         for i_file in args.file:
-            aria2.addUri([i_file])
+            aria2.addUri(secret, [i_file])
         sys.exit()
 
     ui = config['UI']
@@ -570,6 +571,8 @@ def main():
         print("Invalid server:", server)
     except ConnectionRefusedError:
         print("Connection refused.\nMake sure aria2 is running or authorized on", server + ":" + str(port))
+    except pyaria2.xmlrpc.client.Fault:
+        print("Unauthorized.\nInvalid RPC secret token.")
 
 
 main()

@@ -25,7 +25,7 @@ Author: Killua
 Email: killua_hzl@163.com
 '''
 
-#!/bin/python
+#!/bin/env python3
 
 import subprocess
 import xmlrpc.client
@@ -49,7 +49,7 @@ class PyAria2(object):
         server_uri = SERVER_URI_FORMAT.format(host, port)
         self.server = xmlrpc.client.ServerProxy(server_uri, allow_none=True)
 
-    def addUri(self, secret, uris, options=None, position=None):
+    def addUri(self, token, uris, options=None, position=None):
         '''
         This method adds new HTTP(S)/FTP/BitTorrent Magnet URI.
 
@@ -59,9 +59,9 @@ class PyAria2(object):
 
         return: This method returns GID of registered download.
         '''
-        return self.server.aria2.addUri(secret, uris, options, position)
+        return self.server.aria2.addUri(token, uris, options, position)
 
-    def addTorrent(self, secret, torrent, uris=None, options=None, position=None):
+    def addTorrent(self, token, torrent, uris=None, options=None, position=None):
         '''
         This method adds BitTorrent download by uploading ".torrent" file.
 
@@ -72,9 +72,9 @@ class PyAria2(object):
 
         return: This method returns GID of registered download.
         '''
-        return self.server.aria2.addTorrent(secret, xmlrpc.client.Binary(open(torrent, 'rb').read()), uris, options, position)
+        return self.server.aria2.addTorrent(token, xmlrpc.client.Binary(open(torrent, 'rb').read()), uris, options, position)
 
-    def addMetalink(self, secret, metalink, options=None, position=None):
+    def addMetalink(self, token, metalink, options=None, position=None):
         '''
         This method adds Metalink download by uploading ".metalink" file.
 
@@ -84,9 +84,9 @@ class PyAria2(object):
 
         return: This method returns list of GID of registered download.
         '''
-        return self.server.aria2.addMetalink(secret, xmlrpc.client.Binary(open(metalink, 'rb').read()), options, position)
+        return self.server.aria2.addMetalink(token, xmlrpc.client.Binary(open(metalink, 'rb').read()), options, position)
 
-    def remove(self, secret, gid):
+    def remove(self, token, gid):
         '''
         This method removes the download denoted by gid.
 
@@ -94,9 +94,9 @@ class PyAria2(object):
 
         return: This method returns GID of removed download.
         '''
-        return self.server.aria2.remove(secret, gid)
+        return self.server.aria2.remove(token, gid)
 
-    def forceRemove(self, secret, gid):
+    def forceRemove(self, token, gid):
         '''
         This method removes the download denoted by gid.
 
@@ -104,9 +104,9 @@ class PyAria2(object):
 
         return: This method returns GID of removed download.
         '''
-        return self.server.aria2.forceRemove(secret, gid)
+        return self.server.aria2.forceRemove(token, gid)
 
-    def pause(self, secret, gid):
+    def pause(self, token, gid):
         '''
         This method pauses the download denoted by gid.
 
@@ -114,17 +114,17 @@ class PyAria2(object):
 
         return: This method returns GID of paused download.
         '''
-        return self.server.aria2.pause(secret, gid)
+        return self.server.aria2.pause(token, gid)
 
-    def pauseAll(self, secret):
+    def pauseAll(self, token):
         '''
         This method is equal to calling aria2.pause() for every active/waiting download.
 
         return: This method returns OK for success.
         '''
-        return self.server.aria2.pauseAll(secret)
+        return self.server.aria2.pauseAll(token)
 
-    def forcePause(self, secret, gid):
+    def forcePause(self, token, gid):
         '''
         This method pauses the download denoted by gid.
 
@@ -132,17 +132,17 @@ class PyAria2(object):
 
         return: This method returns GID of paused download.
         '''
-        return self.server.aria2.forcePause(secret, gid)
+        return self.server.aria2.forcePause(token, gid)
 
-    def forcePauseAll(self, secret):
+    def forcePauseAll(self, token):
         '''
         This method is equal to calling aria2.forcePause() for every active/waiting download.
 
         return: This method returns OK for success.
         '''
-        return self.server.aria2.forcePauseAll(secret)
+        return self.server.aria2.forcePauseAll(token)
 
-    def unpause(self, secret, gid):
+    def unpause(self, token, gid):
         '''
         This method changes the status of the download denoted by gid from paused to waiting.
 
@@ -150,17 +150,17 @@ class PyAria2(object):
 
         return: This method returns GID of unpaused download.
         '''
-        return self.server.aria2.unpause(secret, gid)
+        return self.server.aria2.unpause(token, gid)
 
-    def unpauseAll(self, secret):
+    def unpauseAll(self, token):
         '''
         This method is equal to calling aria2.unpause() for every active/waiting download.
 
         return: This method returns OK for success.
         '''
-        return self.server.aria2.unpauseAll(secret)
+        return self.server.aria2.unpauseAll(token)
 
-    def tellStatus(self, secret, gid, keys=None):
+    def tellStatus(self, token, gid, keys=None):
         '''
         This method returns download progress of the download denoted by gid.
 
@@ -169,9 +169,9 @@ class PyAria2(object):
 
         return: The method response is of type dict and it contains following keys.
         '''
-        return self.server.aria2.tellStatus(secret, gid, keys)
+        return self.server.aria2.tellStatus(token, gid, keys)
 
-    def getUris(self, secret, gid):
+    def getUris(self, token, gid):
         '''
         This method returns URIs used in the download denoted by gid.
 
@@ -179,9 +179,9 @@ class PyAria2(object):
 
         return: The method response is of type list and its element is of type dict and it contains following keys.
         '''
-        return self.server.aria2.getUris(secret, gid)
+        return self.server.aria2.getUris(token, gid)
 
-    def getFiles(self, secret, gid):
+    def getFiles(self, token, gid):
         '''
         This method returns file list of the download denoted by gid.
 
@@ -189,9 +189,9 @@ class PyAria2(object):
 
         return: The method response is of type list and its element is of type dict and it contains following keys.
         '''
-        return self.server.aria2.getFiles(secret, gid)
+        return self.server.aria2.getFiles(token, gid)
 
-    def getPeers(self, secret, gid):
+    def getPeers(self, token, gid):
         '''
         This method returns peer list of the download denoted by gid.
 
@@ -199,9 +199,9 @@ class PyAria2(object):
 
         return: The method response is of type list and its element is of type dict and it contains following keys.
         '''
-        return self.server.aria2.getPeers(secret, gid)
+        return self.server.aria2.getPeers(token, gid)
 
-    def getServers(self, secret, gid):
+    def getServers(self, token, gid):
         '''
         This method returns currently connected HTTP(S)/FTP servers of the download denoted by gid.
 
@@ -209,9 +209,9 @@ class PyAria2(object):
 
         return: The method response is of type list and its element is of type dict and it contains following keys.
         '''
-        return self.server.aria2.getServers(secret, gid)
+        return self.server.aria2.getServers(token, gid)
 
-    def tellActive(self, secret, keys=None):
+    def tellActive(self, token, keys=None):
         '''
         This method returns the list of active downloads.
 
@@ -219,9 +219,9 @@ class PyAria2(object):
 
         return: The method response is of type list and its element is of type dict and it contains following keys.
         '''
-        return self.server.aria2.tellActive(secret, keys)
+        return self.server.aria2.tellActive(token, keys)
 
-    def tellWaiting(self, secret, offset, num, keys=None):
+    def tellWaiting(self, token, offset, num, keys=None):
         '''
         This method returns the list of waiting download, including paused downloads.
 
@@ -231,9 +231,9 @@ class PyAria2(object):
 
         return: The method response is of type list and its element is of type dict and it contains following keys.
         '''
-        return self.server.aria2.tellWaiting(secret, offset, num, keys)
+        return self.server.aria2.tellWaiting(token, offset, num, keys)
 
-    def tellStopped(self, secret, offset, num, keys=None):
+    def tellStopped(self, token, offset, num, keys=None):
         '''
         This method returns the list of stopped download.
 
@@ -243,9 +243,9 @@ class PyAria2(object):
 
         return: The method response is of type list and its element is of type dict and it contains following keys.
         '''
-        return self.server.aria2.tellStopped(secret, offset, num, keys)
+        return self.server.aria2.tellStopped(token, offset, num, keys)
 
-    def changePosition(self, secret, gid, pos, how):
+    def changePosition(self, token, gid, pos, how):
         '''
         This method changes the position of the download denoted by gid.
 
@@ -258,9 +258,9 @@ class PyAria2(object):
 
         return: The response is of type integer and it is the destination position.
         '''
-        return self.server.aria2.changePosition(secret, gid, pos, how)
+        return self.server.aria2.changePosition(token, gid, pos, how)
 
-    def changeUri(self, secret, gid, fileIndex, delUris, addUris, position=None):
+    def changeUri(self, token, gid, fileIndex, delUris, addUris, position=None):
         '''
         This method removes URIs in delUris from and appends URIs in addUris to download denoted by gid.
 
@@ -272,9 +272,9 @@ class PyAria2(object):
 
         return: This method returns a list which contains 2 integers. The first integer is the number of URIs deleted. The second integer is the number of URIs added.
         '''
-        return self.server.aria2.changeUri(secret, gid, fileIndex, delUris, addUris, position)
+        return self.server.aria2.changeUri(token, gid, fileIndex, delUris, addUris, position)
 
-    def getOption(self, secret, gid):
+    def getOption(self, token, gid):
         '''
         This method returns options of the download denoted by gid.
 
@@ -282,9 +282,9 @@ class PyAria2(object):
 
         return: The response is of type dict.
         '''
-        return self.server.aria2.getOption(secret, gid)
+        return self.server.aria2.getOption(token, gid)
 
-    def changeOption(self, secret, gid, options):
+    def changeOption(self, token, gid, options):
         '''
         This method changes options of the download denoted by gid dynamically.
 
@@ -293,17 +293,17 @@ class PyAria2(object):
 
         return: This method returns OK for success.
         '''
-        return self.server.aria2.changeOption(secret, gid, options)
+        return self.server.aria2.changeOption(token, gid, options)
 
-    def getGlobalOption(self, secret):
+    def getGlobalOption(self, token):
         '''
         This method returns global options.
 
         return: The method response is of type dict.
         '''
-        return self.server.aria2.getGlobalOption(secret)
+        return self.server.aria2.getGlobalOption(token)
 
-    def changeGlobalOption(self, secret, options):
+    def changeGlobalOption(self, token, options):
         '''
         This method changes global options dynamically.
 
@@ -311,60 +311,60 @@ class PyAria2(object):
 
         return: This method returns OK for success.
         '''
-        return self.server.aria2.changeGlobalOption(secret, options)
+        return self.server.aria2.changeGlobalOption(token, options)
 
-    def getGlobalStat(self, secret):
+    def getGlobalStat(self, token):
         '''
         This method returns global statistics such as overall download and upload speed.
 
         return: The method response is of type struct and contains following keys.
         '''
-        return self.server.aria2.getGlobalStat(secret)
+        return self.server.aria2.getGlobalStat(token)
 
-    def purgeDownloadResult(self, secret):
+    def purgeDownloadResult(self, token):
         '''
         This method purges completed/error/removed downloads to free memory.
 
         return: This method returns OK for success.
         '''
-        return self.server.aria2.purgeDownloadResult(secret)
+        return self.server.aria2.purgeDownloadResult(token)
 
-    def removeDownloadResult(self, secret, gid):
+    def removeDownloadResult(self, token, gid):
         '''
         This method removes completed/error/removed download denoted by gid from memory.
 
         return: This method returns OK for success.
         '''
-        return self.server.aria2.removeDownloadResult(secret, gid)
+        return self.server.aria2.removeDownloadResult(token, gid)
 
-    def getVersion(self, secret):
+    def getVersion(self, token):
         '''
         This method returns version of the program and the list of enabled features.
 
         return: The method response is of type dict and contains following keys.
         '''
-        return self.server.aria2.getVersion(secret)
+        return self.server.aria2.getVersion(token)
 
-    def getSessionInfo(self, secret):
+    def getSessionInfo(self, token):
         '''
         This method returns session information.
 
         return: The response is of type dict.
         '''
-        return self.server.aria2.getSessionInfo(secret)
+        return self.server.aria2.getSessionInfo(token)
 
-    def shutdown(self, secret):
+    def shutdown(self, token):
         '''
         This method shutdowns aria2.
 
         return: This method returns OK for success.
         '''
-        return self.server.aria2.shutdown(secret)
+        return self.server.aria2.shutdown(token)
 
-    def forceShutdown(self, secret):
+    def forceShutdown(self, token):
         '''
         This method shutdowns aria2.
 
         return: This method returns OK for success.
         '''
-        return self.server.aria2.forceShutdown(secret)
+        return self.server.aria2.forceShutdown(token)

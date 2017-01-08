@@ -25,7 +25,7 @@ Author: Killua
 Email: killua_hzl@163.com
 '''
 
-#!/bin/python
+#!/bin/env python3
 
 import subprocess
 import xmlrpc.client

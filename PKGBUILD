@@ -7,7 +7,7 @@ pkgdesc="A curses-based console client for aria2"
 arch=('any')
 url='http://bitbucket.org/maisammusthafa/narnia'
 license=('MIT')
-depends=('python')
+depends=('python3')
 optdepends=(
     'aria2: to run the aria2 RPC server locally'
     )

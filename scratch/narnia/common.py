@@ -94,6 +94,7 @@ class Config:
     profile = config['Connection'].get('profile', 'default')
     server = profiles[profile].get('server', 'localhost')
     port = profiles[profile].getint('port', 6800)
+    token = 'token:' + profiles[profile].get('rpc-secret', '')
     aria2 = pyaria2.PyAria2(server, port, None)
 
     interface = config['UI']
@@ -104,6 +105,9 @@ class Config:
     refresh_interval = interface.getfloat('refresh-interval', 0.5)
     progress_markers = interface.get('progress-bar-markers', '[]')
     progress_char = interface.get('progress-bar-char', '#')
+
+
+c = Config
 
 
 def create_row(*fields):
@@ -141,14 +145,14 @@ class Header:
             "NAME", "SIZE", "STATUS", "PROGRESS", "", "S/P", "D/U", "ETA"
 
         self.string = create_row(
-            (name, Config.widths.name, 3, 'right'),
-            (size, Config.widths.size, 3, 'left'),
-            (status, Config.widths.status, 3, 'right'),
-            (progress, Config.widths.progress, 3, 'right'),
-            (percent, Config.widths.percent, 3, 'right'),
-            (seeds_peers, Config.widths.seeds_peers, 3, 'left'),
-            (speed, Config.widths.speed, 3, 'left'),
-            (eta, Config.widths.eta, 1, 'left')
+            (name, c.widths.name, 3, 'right'),
+            (size, c.widths.size, 3, 'left'),
+            (status, c.widths.status, 3, 'right'),
+            (progress, c.widths.progress, 3, 'right'),
+            (percent, c.widths.percent, 3, 'right'),
+            (seeds_peers, c.widths.seeds_peers, 3, 'left'),
+            (speed, c.widths.speed, 3, 'left'),
+            (eta, c.widths.eta, 1, 'left')
             )
 
     def draw(self, init):
@@ -169,14 +173,14 @@ class Status:
     """ status class """
 
     def __init__(self):
-        self.data = Config.aria2.getGlobalStat()
+        self.data = c.aria2.getGlobalStat(c.token)
         self.string = None
         self.update()
 
     def update(self):
         """ generate status """
 
-        data = Config.aria2.getGlobalStat()
+        data = c.aria2.getGlobalStat(c.token)
 
         if self.string is not None and \
                 g.tty['prev_h'] == g.tty['curr_h'] and \
@@ -190,8 +194,8 @@ class Status:
         self.win = curses.newwin(1, g.tty['curr_w'],
                                  g.tty['curr_h'] - 1, 0)
 
-        s_server = 'server: ' + Config.server + ':' + str(Config.port) + \
-            ' ' + ('v' + Config.aria2.getVersion()['version']).join('()')
+        s_server = 'server: ' + c.server + ':' + str(c.port) + \
+            ' ' + ('v' + c.aria2.getVersion(c.token)['version']).join('()')
 
         num_downloads = int(self.data['numActive']) + \
             int(self.data['numWaiting']) + int(self.data['numStopped'])

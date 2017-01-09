@@ -8,7 +8,7 @@ import sys
 import time
 
 from narnia.common import Config as c, Globals as g
-from narnia.common import create_row, Header, Status
+from narnia.common import Header, Status
 from narnia.download import Download
 
 
@@ -19,9 +19,9 @@ def get_downloads():
     prev_downloads = list(g.downloads)
     g.downloads = []
 
-    active = c.aria2.tellActive()
-    waiting = c.aria2.tellWaiting(0, 100)
-    stopped = c.aria2.tellStopped(-1, 100)
+    active = c.aria2.tellActive(c.token)
+    waiting = c.aria2.tellWaiting(c.token, 0, 100)
+    stopped = c.aria2.tellStopped(c.token, -1, 100)
     states = [active, waiting, stopped]
 
     def lookup(query):

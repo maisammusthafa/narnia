@@ -1,6 +1,6 @@
 #!/bin/env python3
 from narnia import pyaria2, cstr
-import argparse, configparser, curses, os, re, sys, time
+import argparse, configparser, curses, io, os, re, sys, time
 from socket import gaierror
 
 class Download:
@@ -538,14 +538,12 @@ def main():
     profiles_file = os.path.expanduser("~/.config/narnia/profiles")
 
     if not os.path.isfile(config_file):
-        import io
         config_file = io.StringIO('[Connection]\n[UI]\n[Colors]\n[Keybindings]')
         config.readfp(config_file)
     else:
         config.read(config_file)
 
     if not os.path.isfile(profiles_file):
-        import io
         profiles_file = io.StringIO('[default]')
         profiles.readfp(profiles_file)
     else:

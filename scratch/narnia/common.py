@@ -3,6 +3,7 @@
 
 import configparser
 import curses
+import io
 import os
 
 import narnia.pyaria2 as pyaria2
@@ -76,30 +77,33 @@ class Widths:
 
 
 class Config:
-    config = configparser.ConfigParser()
-    config_file = os.path.expanduser("~/.config/narnia/config")
+    def load_conf(name, sections):
+        conf = configparser.ConfigParser()
+        conf_file = os.path.expanduser("~/.config/narnia/" + name)
 
-    if not os.path.isfile(config_file):
-        import io
-        config_file = io.StringIO('[Connection]\n[UI]\n \
-                [Colors]\n[Keybindings]')
-        config.readfp(config_file)
-    else:
-        config.read(config_file)
+        if not os.path.isfile(conf_file):
+            conf_file = io.StringIO(sections)
+            conf.readfp(conf_file)
+        else:
+            conf.read(conf_file)
+        return conf
+
+    config = load_conf('config', '[Connection]\n[UI]\n[Colors]\n[Keybindings]')
+    profiles = load_conf('profiles', '[default]')
+
+    profile = config['Connection'].get('profile', 'default')
+    server = profiles[profile].get('server', 'localhost')
+    port = profiles[profile].getint('port', 6800)
+    aria2 = pyaria2.PyAria2(server, port, None)
 
     interface = config['UI']
-
-    server = config['Connection'].get('server', 'localhost')
-    port = config['Connection'].getint('port', 6800)
-    aria2 = pyaria2.PyAria2(server, port, None)
+    keys = Keybindings(config['Keybindings'])
+    colors = Colors(config['Colors'])
+    widths = Widths(interface)
 
     refresh_interval = interface.getfloat('refresh-interval', 0.5)
     progress_markers = interface.get('progress-bar-markers', '[]')
     progress_char = interface.get('progress-bar-char', '#')
-
-    keys = Keybindings(config['Keybindings'])
-    colors = Colors(config['Colors'])
-    widths = Widths(interface)
 
 
 def create_row(*fields):

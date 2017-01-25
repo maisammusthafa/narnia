@@ -88,6 +88,7 @@ class Config:
             conf.read(conf_file)
         return conf
 
+    # TODO: Fix crash on missing config sections
     config = load_conf('config', '[Connection]\n[UI]\n[Colors]\n[Keybindings]')
     profiles = load_conf('profiles', '[default]')
 

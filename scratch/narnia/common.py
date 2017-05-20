@@ -26,7 +26,8 @@ class Globals:
     num_downloads = 0
     focused = None
 
-    timer = 0
+    timer_data = 0
+    timer_ui = 0
     dbg = 0
 
 

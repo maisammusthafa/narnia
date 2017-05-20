@@ -75,7 +75,11 @@ def key_actions(key):
         g.status.win.noutrefresh()
         g.status.update()
 
-        g.timer = (c.refresh_interval * 100) - 1
+        for i in range(g.num_downloads):
+            g.downloads[i].draw(i + 1, True)
+        curses.doupdate()
+
+        g.timer_ui = (c.refresh_interval * 100) - 1
 
     def nav_up():
         """ nav up """
@@ -133,17 +137,20 @@ def main(screen):
     screen.keypad(True)
     screen.getch()
 
-    g.timer = c.refresh_interval * 100
+    g.timer_ui = c.refresh_interval * 100
+    g.timer_data = c.refresh_interval * 100
 
     g.header = Header()
     g.status = Status()
     g.header.draw(True)
     g.status.draw(True)
 
+    get_downloads()
+    g.status.update()
+
     while True:
-        if g.timer == c.refresh_interval * 100:
+        if g.timer_ui == c.refresh_interval * 100:
             g.header.draw(False)
-            get_downloads()
 
             if g.num_downloads != 0:
                 if g.focused not in g.downloads:
@@ -152,27 +159,33 @@ def main(screen):
                 g.focused.highlight = curses.A_REVERSE
 
                 for i in range(g.num_downloads):
-                    g.downloads[i].draw(i + 1)
+                    g.downloads[i].draw(i + 1, False)
 
-            g.status.update()
             g.status.draw(False)
 
             g.tty['prev_h'] = g.tty['curr_h']
             g.tty['prev_w'] = g.tty['curr_w']
 
             curses.doupdate()
-            g.timer = 0
+            g.timer_ui = 0
+
+        if g.timer_data == c.refresh_interval * 100:
+            get_downloads()
+            g.status.update()
+            g.timer_data = 0
 
         # dbg = curses.newwin(20, g.tty['curr_w'], tty['curr_h'] - 20, 0)
         # dbg.addstr(0, 0, str(g.dbg))
         # dbg.noutrefresh()
 
         time.sleep(0.01)
-        g.timer += 1
+        g.timer_ui += 1
+        g.timer_data += 1
 
         key_in = screen.getch()
         if key_in != -1:
-            g.timer = c.refresh_interval * 100
+            g.timer_ui = c.refresh_interval * 100
+            pass
         key_actions(key_in)
 
     input()

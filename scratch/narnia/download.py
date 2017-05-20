@@ -130,8 +130,12 @@ class Download:
             (d_speed, c.widths.speed, 3, 'left'),
             (d_eta, c.widths.eta, 1, 'left'))
 
-    def draw(self, y_pos):
+    def draw(self, y_pos, resized):
         """ draw the window """
+
+        if resized:
+            self.refresh(self.data)
+            # TODO: [BUG] network request is being made for new data
 
         if self.changed or (self.highlight != self.prev_highlight):
             self.prev_highlight = self.highlight

@@ -188,7 +188,7 @@ class Window:
             # except:
                 # pass
         if Download.num_downloads != 0:
-            selected_file = self.create_row((str(Download.rows[self.option]['name']), self.width, 3, 0))
+            selected_file = self.create_row(("[" + str(Download.rows[self.option]['gid']) + "] " + str(Download.rows[self.option]['name']), self.width, 3, 0))
             cstr.add(self.height - 2, 0, selected_file, self.win, True)
 
         cstr.add(self.height - 1, 0, self.s_string, self.win, True)
@@ -556,6 +556,8 @@ def main():
     parser.add_argument('-s','--server', help='Server to connect to')
     parser.add_argument('-p','--port', help='Port to connect through')
     parser.add_argument('-t','--token', help='aria2 RPC secret token')
+    parser.add_argument('-d', '--delete', help='Delete a download using its GID')
+    parser.add_argument('-i', '--info', help='Returns info on a download using its GID')
     parser.add_argument('file', nargs='*')
 
     args = parser.parse_args()
@@ -573,6 +575,12 @@ def main():
     if args.file != []:
         for i_file in args.file:
             aria2.addUri(token, [i_file])
+        sys.exit()
+    elif args.delete is not None:
+        aria2.removeDownloadResult(token, args.delete)
+        sys.exit()
+    elif args.info is not None:
+        print(aria2.tellStatus(token, args.info))
         sys.exit()
 
     ui = config['UI']

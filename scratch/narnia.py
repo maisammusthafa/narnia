@@ -91,7 +91,6 @@ def key_actions(key):
 
     def nav_down():
         """ nav down """
-
         g.focused.highlight = 0
         g.focused = g.downloads[(g.downloads.index(g.focused) + 1) %
                                 g.num_downloads]
@@ -101,20 +100,37 @@ def key_actions(key):
         sys.exit()
 
     def pause():
+        """ pause """
         if g.focused.status == 'active' or g.focused.status == 'waiting':
             c.aria2.pause(c.token, g.focused.gid)
         elif g.focused.status == 'paused':
             c.aria2.unpause(c.token, g.focused.gid)
 
     def pause_all():
+        """ pause all """
         if len(c.aria2.tellActive(c.token)) == 0:
             c.aria2.unpauseAll(c.token)
         else:
             c.aria2.pauseAll(c.token)
 
+    def queue_up():
+        """ queue up """
+        if g.focused.status == 'waiting':
+            c.aria2.changePosition(c.token, g.focused.gid, -1, 'POS_CUR')
+            refresh_data()          # TODO: Optimize here
+
+    def queue_down():
+        """ queue down """
+        if g.focused.status == 'waiting':
+            c.aria2.changePosition(c.token, g.focused.gid, 1, 'POS_CUR')
+            refresh_data()          # TODO: Optimize here
+
+    def purge():
+        """ purge """
+        c.aria2.purgeDownloadResult(c.token)
+
     def none():
         """ do nothing """
-
         pass
 
     actions = {
@@ -127,9 +143,9 @@ def key_actions(key):
         c.keys.pause: pause,
         # c.keys.add: add,
         # c.keys.delete: delete,
-        # c.keys.purge: purge,
-        # c.keys.queue_up: queue_up,
-        # c.keys.queue_down: queue_down,
+        c.keys.purge: purge,
+        c.keys.queue_up: queue_up,
+        c.keys.queue_down: queue_down,
         # c.keys.select: select,
         # c.keys.expand: expand,
         c.keys.quit: end,
@@ -138,6 +154,12 @@ def key_actions(key):
     if g.num_downloads != 0 or \
             key == c.keys.quit or key == curses.KEY_RESIZE:
         actions.get(key, none)()
+
+
+def refresh_data():
+    get_downloads()
+    g.status.update()
+    g.timer_data = 0
 
 
 def main(screen):
@@ -181,9 +203,7 @@ def main(screen):
             g.timer_ui = 0
 
         if g.timer_data == c.refresh_interval * 100:
-            get_downloads()
-            g.status.update()
-            g.timer_data = 0
+            refresh_data()
 
         # dbg = curses.newwin(20, g.tty['curr_w'], tty['curr_h'] - 20, 0)
         # dbg.addstr(0, 0, str(g.dbg))
@@ -196,7 +216,6 @@ def main(screen):
         key_in = screen.getch()
         if key_in != -1:
             g.timer_ui = c.refresh_interval * 100
-            pass
         key_actions(key_in)
 
     input()

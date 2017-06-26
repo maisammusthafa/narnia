@@ -98,8 +98,19 @@ def key_actions(key):
 
     def end():
         """ quit """
-
         sys.exit()
+
+    def pause():
+        if g.focused.status == 'active' or g.focused.status == 'waiting':
+            c.aria2.pause(c.token, g.focused.gid)
+        elif g.focused.status == 'paused':
+            c.aria2.unpause(c.token, g.focused.gid)
+
+    def pause_all():
+        if len(c.aria2.tellActive(c.token)) == 0:
+            c.aria2.unpauseAll(c.token)
+        else:
+            c.aria2.pauseAll(c.token)
 
     def none():
         """ do nothing """
@@ -112,8 +123,8 @@ def key_actions(key):
         c.keys.key_up: nav_up,
         curses.KEY_DOWN: nav_down,
         c.keys.key_down: nav_down,
-        # c.keys.pause_all: pause_all,
-        # c.keys.pause: pause,
+        c.keys.pause_all: pause_all,
+        c.keys.pause: pause,
         # c.keys.add: add,
         # c.keys.delete: delete,
         # c.keys.purge: purge,
@@ -192,3 +203,5 @@ def main(screen):
 
 
 curses.wrapper(main)
+
+# TODO: [bug] progress percentage is 0 on complete for 0 byte files

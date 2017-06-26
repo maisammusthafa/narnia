@@ -137,10 +137,11 @@ class Download:
             self.refresh(self.data)
             # TODO: [BUG] network request is being made for new data
 
-        if self.changed or (self.highlight != self.prev_highlight):
-            self.prev_highlight = self.highlight
-        else:
-            return
+        # TODO: Optimize draw here
+        # if self.changed or (self.highlight != self.prev_highlight):
+            # self.prev_highlight = self.highlight
+        # else:
+            # return
 
         self.win.clear()
         self.win.mvwin(y_pos, 0)

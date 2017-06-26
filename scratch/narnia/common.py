@@ -47,6 +47,7 @@ class Keybindings:
         self.queue_down = ord(keybindings.get('queue-down', 'J'))
         self.select = ord(keybindings.get('select-file', 'v'))
         self.expand = ord(keybindings.get('expand-torrent', 'h'))
+        self.retry = ord(keybindings.get('retry', 'r'))
         self.quit = ord(keybindings.get('quit', 'q'))
 
 

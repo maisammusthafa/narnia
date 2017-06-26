@@ -129,6 +129,13 @@ def key_actions(key):
         """ purge """
         c.aria2.purgeDownloadResult(c.token)
 
+    def retry():
+        """ retry """
+        if g.focused.status == "error":
+            url = g.focused.data['files'][0]['uris'][0]['uri'].strip()
+            c.aria2.removeDownloadResult(c.token, g.focused.gid)
+            c.aria2.addUri(c.token, [url])
+
     def none():
         """ do nothing """
         pass
@@ -148,6 +155,7 @@ def key_actions(key):
         c.keys.queue_down: queue_down,
         # c.keys.select: select,
         # c.keys.expand: expand,
+        c.keys.retry: retry,
         c.keys.quit: end,
         }
 
@@ -205,9 +213,13 @@ def main(screen):
         if g.timer_data == c.refresh_interval * 100:
             refresh_data()
 
-        # dbg = curses.newwin(20, g.tty['curr_w'], tty['curr_h'] - 20, 0)
+
+        # DEBUGGING
+        # g.dbg = 0
+        # dbg = curses.newwin(20, g.tty['curr_w'], g.tty['curr_h'] - 20, 0)
         # dbg.addstr(0, 0, str(g.dbg))
         # dbg.noutrefresh()
+
 
         time.sleep(0.01)
         g.timer_ui += 1

@@ -73,7 +73,7 @@ def key_actions(key):
 
         g.status.win.clear()
         g.status.win.noutrefresh()
-        g.status.update()
+        g.status.refresh_data()
 
         for i in range(g.num_downloads):
             g.downloads[i].draw(i + 1, True)
@@ -166,7 +166,7 @@ def key_actions(key):
 
 def refresh_data():
     get_downloads()
-    g.status.update()
+    g.status.refresh_data()
     g.timer_data = 0
 
 
@@ -187,7 +187,7 @@ def main(screen):
     g.status.draw(True)
 
     get_downloads()
-    g.status.update()
+    g.status.refresh_data()
 
     while True:
         if g.timer_ui == c.refresh_interval * 100:

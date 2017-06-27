@@ -176,14 +176,21 @@ class Status:
     """ status class """
 
     def __init__(self):
-        self.data = c.aria2.getGlobalStat(c.token)
+        data = {'downloadSpeed': '0', 'numActive': '0', 'numStopped': '0', 'numStoppedTotal': '0', 'numWaiting': '0', 'uploadSpeed': '0'}
+        version = "0.00.0"
+        self.data = None
         self.string = None
-        self.update()
+        self.update(data, version)
 
-    def update(self):
-        """ generate status """
+    def refresh_data(self):
+        """ refresh status bar data """
 
         data = c.aria2.getGlobalStat(c.token)
+        version = c.aria2.getVersion(c.token)['version']
+        self.update(data, version)
+
+    def update(self, data, version):
+        """ generate status """
 
         if self.string is not None and \
                 g.tty['prev_h'] == g.tty['curr_h'] and \
@@ -198,7 +205,7 @@ class Status:
                                  g.tty['curr_h'] - 1, 0)
 
         s_server = 'server: ' + c.server + ':' + str(c.port) + \
-            ' ' + ('v' + c.aria2.getVersion(c.token)['version']).join('()')
+            ' ' + ('v' + version).join('()')
 
         num_downloads = int(self.data['numActive']) + \
             int(self.data['numWaiting']) + int(self.data['numStopped'])

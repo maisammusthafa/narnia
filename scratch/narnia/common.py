@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/bin/env python3
 """ common objects """
 
 import configparser
@@ -134,8 +134,6 @@ def create_row(*fields):
 
 
 class Header:
-    """ header class """
-
     def __init__(self):
         self.update()
 
@@ -173,10 +171,9 @@ class Header:
 
 
 class Status:
-    """ status class """
-
     def __init__(self):
-        data = {'downloadSpeed': '0', 'numActive': '0', 'numStopped': '0', 'numStoppedTotal': '0', 'numWaiting': '0', 'uploadSpeed': '0'}
+        data = {'downloadSpeed': '0', 'numActive': '0', 'numStopped': '0',
+                'numStoppedTotal': '0', 'numWaiting': '0', 'uploadSpeed': '0'}
         version = "0.00.0"
         self.data = None
         self.string = None
@@ -225,8 +222,6 @@ class Status:
             )
 
     def draw(self, init):
-        """ draw status """
-
         if not self.changed and not init:
             return
 

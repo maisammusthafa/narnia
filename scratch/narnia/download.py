@@ -1,5 +1,5 @@
-#!/usr/bin/env python3
-""" download """
+#!/bin/env python3
+""" provides download class """
 
 import curses
 import os
@@ -53,6 +53,7 @@ class Download:
         self.done = int(self.data['completedLength'])
         self.status = self.data['status']
         self.progress = (self.done / self.size) if self.size != 0 else 0
+        # TODO: [bug] progress percentage is 0 on complete for 0 byte files
         self.seeds = int(self.data['numSeeders']) if self.torrent else 0
         self.peers = int(self.data['connections'])
         self.dl_speed = int(self.data['downloadSpeed'])
@@ -131,8 +132,6 @@ class Download:
             (d_eta, c.widths.eta, 1, 'left'))
 
     def draw(self, y_pos, resized):
-        """ draw the window """
-
         if resized:
             self.refresh(self.data)
             # TODO: [BUG] network request is being made for new data

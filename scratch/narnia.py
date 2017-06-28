@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/bin/env python3
 """ narnia """
 
 import argparse
@@ -82,62 +82,52 @@ def key_actions(key):
         g.timer_ui = (c.refresh_interval * 100) - 1
 
     def nav_up():
-        """ nav up """
-        # TODO implement nav_up on delete
+        # TODO: implement nav_up on delete
 
         g.focused.highlight = 0
         g.focused = g.downloads[(g.downloads.index(g.focused) - 1) %
                                 g.num_downloads]
 
     def nav_down():
-        """ nav down """
         g.focused.highlight = 0
         g.focused = g.downloads[(g.downloads.index(g.focused) + 1) %
                                 g.num_downloads]
 
     def end():
-        """ quit """
         sys.exit()
 
     def pause():
-        """ pause """
         if g.focused.status == 'active' or g.focused.status == 'waiting':
             c.aria2.pause(c.token, g.focused.gid)
         elif g.focused.status == 'paused':
             c.aria2.unpause(c.token, g.focused.gid)
 
     def pause_all():
-        """ pause all """
-        if len(c.aria2.tellActive(c.token)) == 0:
+        if not c.aria2.tellActive(c.token):
             c.aria2.unpauseAll(c.token)
         else:
             c.aria2.pauseAll(c.token)
 
     def queue_up():
-        """ queue up """
         if g.focused.status == 'waiting':
             c.aria2.changePosition(c.token, g.focused.gid, -1, 'POS_CUR')
-            refresh_data()          # TODO: Optimize here
+            update_aria_data()          # TODO: Optimize here
 
     def queue_down():
-        """ queue down """
         if g.focused.status == 'waiting':
             c.aria2.changePosition(c.token, g.focused.gid, 1, 'POS_CUR')
-            refresh_data()          # TODO: Optimize here
+            update_aria_data()          # TODO: Optimize here
 
     def purge():
-        """ purge """
         c.aria2.purgeDownloadResult(c.token)
 
     def retry():
-        """ retry """
         if g.focused.status == "error":
             url = g.focused.data['files'][0]['uris'][0]['uri'].strip()
             c.aria2.removeDownloadResult(c.token, g.focused.gid)
             c.aria2.addUri(c.token, [url])
 
     def none():
-        """ do nothing """
         pass
 
     actions = {
@@ -164,7 +154,9 @@ def key_actions(key):
         actions.get(key, none)()
 
 
-def refresh_data():
+def update_aria_data():
+    """ request new download/status data """
+
     get_downloads()
     g.status.refresh_data()
     g.timer_data = 0
@@ -211,15 +203,13 @@ def main(screen):
             g.timer_ui = 0
 
         if g.timer_data == c.refresh_interval * 100:
-            refresh_data()
-
+            update_aria_data()
 
         # DEBUGGING
         # g.dbg = 0
         # dbg = curses.newwin(20, g.tty['curr_w'], g.tty['curr_h'] - 20, 0)
         # dbg.addstr(0, 0, str(g.dbg))
         # dbg.noutrefresh()
-
 
         time.sleep(0.01)
         g.timer_ui += 1
@@ -234,5 +224,3 @@ def main(screen):
 
 
 curses.wrapper(main)
-
-# TODO: [bug] progress percentage is 0 on complete for 0 byte files

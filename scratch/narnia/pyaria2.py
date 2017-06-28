@@ -1,6 +1,8 @@
 #!/bin/env python3
+""" provides wrapper class for aria2 rpc """
+
 import time
-duration = 0.0
+import xmlrpc.client
 
 '''The MIT License (MIT)
 
@@ -31,139 +33,139 @@ Author: Killua
 Email: killua_hzl@163.com
 '''
 
-import xmlrpc.client
+wait_time = 0.0
 
 
 class PyAria2(object):
     def __init__(self, host, port, session=None):
-        time.sleep(duration)
+        time.sleep(wait_time)
         server_uri = 'http://{}:{:d}/rpc'.format(host, port)
         self.server = xmlrpc.client.ServerProxy(server_uri, allow_none=True)
 
     def addUri(self, token, uris, options=None, position=None):
-        time.sleep(duration)
+        time.sleep(wait_time)
         return self.server.aria2.addUri(token, uris, options, position)
 
     def addTorrent(self, token, torrent, uris=None, options=None, position=None):
-        time.sleep(duration)
+        time.sleep(wait_time)
         return self.server.aria2.addTorrent(token, xmlrpc.client.Binary(open(torrent, 'rb').read()), uris, options, position)
 
     def addMetalink(self, token, metalink, options=None, position=None):
-        time.sleep(duration)
+        time.sleep(wait_time)
         return self.server.aria2.addMetalink(token, xmlrpc.client.Binary(open(metalink, 'rb').read()), options, position)
 
     def remove(self, token, gid):
-        time.sleep(duration)
+        time.sleep(wait_time)
         return self.server.aria2.remove(token, gid)
 
     def forceRemove(self, token, gid):
-        time.sleep(duration)
+        time.sleep(wait_time)
         return self.server.aria2.forceRemove(token, gid)
 
     def pause(self, token, gid):
-        time.sleep(duration)
+        time.sleep(wait_time)
         return self.server.aria2.pause(token, gid)
 
     def pauseAll(self, token):
-        time.sleep(duration)
+        time.sleep(wait_time)
         return self.server.aria2.pauseAll(token)
 
     def forcePause(self, token, gid):
-        time.sleep(duration)
+        time.sleep(wait_time)
         return self.server.aria2.forcePause(token, gid)
 
     def forcePauseAll(self, token):
-        time.sleep(duration)
+        time.sleep(wait_time)
         return self.server.aria2.forcePauseAll(token)
 
     def unpause(self, token, gid):
-        time.sleep(duration)
+        time.sleep(wait_time)
         return self.server.aria2.unpause(token, gid)
 
     def unpauseAll(self, token):
-        time.sleep(duration)
+        time.sleep(wait_time)
         return self.server.aria2.unpauseAll(token)
 
     def tellStatus(self, token, gid, keys=None):
-        time.sleep(duration)
+        time.sleep(wait_time)
         return self.server.aria2.tellStatus(token, gid, keys)
 
     def getUris(self, token, gid):
-        time.sleep(duration)
+        time.sleep(wait_time)
         return self.server.aria2.getUris(token, gid)
 
     def getFiles(self, token, gid):
-        time.sleep(duration)
+        time.sleep(wait_time)
         return self.server.aria2.getFiles(token, gid)
 
     def getPeers(self, token, gid):
-        time.sleep(duration)
+        time.sleep(wait_time)
         return self.server.aria2.getPeers(token, gid)
 
     def getServers(self, token, gid):
-        time.sleep(duration)
+        time.sleep(wait_time)
         return self.server.aria2.getServers(token, gid)
 
     def tellActive(self, token, keys=None):
-        time.sleep(duration)
+        time.sleep(wait_time)
         return self.server.aria2.tellActive(token, keys)
 
     def tellWaiting(self, token, offset, num, keys=None):
-        time.sleep(duration)
+        time.sleep(wait_time)
         return self.server.aria2.tellWaiting(token, offset, num, keys)
 
     def tellStopped(self, token, offset, num, keys=None):
-        time.sleep(duration)
+        time.sleep(wait_time)
         return self.server.aria2.tellStopped(token, offset, num, keys)
 
     def changePosition(self, token, gid, pos, how):
-        time.sleep(duration)
+        time.sleep(wait_time)
         return self.server.aria2.changePosition(token, gid, pos, how)
 
     def changeUri(self, token, gid, fileIndex, delUris, addUris, position=None):
-        time.sleep(duration)
+        time.sleep(wait_time)
         return self.server.aria2.changeUri(token, gid, fileIndex, delUris, addUris, position)
 
     def getOption(self, token, gid):
-        time.sleep(duration)
+        time.sleep(wait_time)
         return self.server.aria2.getOption(token, gid)
 
     def changeOption(self, token, gid, options):
-        time.sleep(duration)
+        time.sleep(wait_time)
         return self.server.aria2.changeOption(token, gid, options)
 
     def getGlobalOption(self, token):
-        time.sleep(duration)
+        time.sleep(wait_time)
         return self.server.aria2.getGlobalOption(token)
 
     def changeGlobalOption(self, token, options):
-        time.sleep(duration)
+        time.sleep(wait_time)
         return self.server.aria2.changeGlobalOption(token, options)
 
     def getGlobalStat(self, token):
-        time.sleep(duration)
+        time.sleep(wait_time)
         return self.server.aria2.getGlobalStat(token)
 
     def purgeDownloadResult(self, token):
-        time.sleep(duration)
+        time.sleep(wait_time)
         return self.server.aria2.purgeDownloadResult(token)
 
     def removeDownloadResult(self, token, gid):
-        time.sleep(duration)
+        time.sleep(wait_time)
         return self.server.aria2.removeDownloadResult(token, gid)
 
     def getVersion(self, token):
-        time.sleep(duration)
+        time.sleep(wait_time)
         return self.server.aria2.getVersion(token)
 
     def getSessionInfo(self, token):
-        time.sleep(duration)
+        time.sleep(wait_time)
         return self.server.aria2.getSessionInfo(token)
 
     def shutdown(self, token):
-        time.sleep(duration)
+        time.sleep(wait_time)
         return self.server.aria2.shutdown(token)
 
     def forceShutdown(self, token):
-        time.sleep(duration)
+        time.sleep(wait_time)
         return self.server.aria2.forceShutdown(token)

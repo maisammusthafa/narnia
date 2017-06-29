@@ -14,8 +14,8 @@ def _findall(directory):
 
 if __name__ == '__main__':
     distutils.core.setup(
-        name='narnia',
-        version='1.0.0',
+        name='narnia2',
+        version='2.0.0',
 
         description='A curses-based console client for aria2',
         long_description=long_description,
@@ -35,13 +35,13 @@ if __name__ == '__main__':
                 'Programming Language :: Python :: 3 :: Only',
         ],
 
-        scripts=['scripts/narnia'],
+        scripts=['scripts/narnia2'],
 
         data_files=[
-            ('share/doc/narnia/config', _findall('doc/config'),
-            ('share/doc/narnia',
+            ('share/doc/narnia2/config', _findall('doc/config'),
+            ('share/doc/narnia2',
                 ['README.md',
                  'LICENSE.md']))
         ],
 
-        packages=['narnia'])
+        packages=['narnia2'])

@@ -6,7 +6,7 @@ import curses
 import io
 import os
 
-import narnia.pyaria2 as pyaria2
+import narnia2.pyaria2 as pyaria2
 
 
 class Globals:

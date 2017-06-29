@@ -1,7 +1,7 @@
 # Maintainer: Maisam Musthafa <maisam.musthafa@gmail.com>
 
-pkgname=narnia
-pkgver=1.0.0
+pkgname=narnia2
+pkgver=2.0.0
 pkgrel=1
 pkgdesc="A curses-based console client for aria2"
 arch=('any')

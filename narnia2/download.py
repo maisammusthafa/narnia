@@ -5,8 +5,8 @@ import curses
 import os
 import re
 
-from narnia.common import Config as c, Globals as g
-from narnia.common import create_row
+from narnia2.common import Config as c, Globals as g
+from narnia2.common import create_row
 
 
 class Download:

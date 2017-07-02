@@ -23,12 +23,15 @@ class Globals:
     status = None
 
     downloads = []
+    download_states = [[], [], []]
     num_downloads = 0
     focused = None
 
     timer_data = 0
     timer_ui = 0
     dbg = 0
+
+    queue = None
 
 
 g = Globals
@@ -172,21 +175,21 @@ class Header:
 
 class Status:
     def __init__(self):
-        data = {'downloadSpeed': '0', 'numActive': '0', 'numStopped': '0',
-                'numStoppedTotal': '0', 'numWaiting': '0', 'uploadSpeed': '0'}
-        version = "0.00.0"
-        self.data = None
+        self.data = {'downloadSpeed': '0', 'numActive': '0', 'numStopped': '0',
+                     'numStoppedTotal': '0', 'numWaiting': '0', 'uploadSpeed': '0'}
+        self.version = "0.00.0"
         self.string = None
-        self.update(data, version)
+        self.update(self.data)
 
     def refresh_data(self):
         """ refresh status bar data """
 
         data = c.aria2.getGlobalStat(c.token)
-        version = c.aria2.getVersion(c.token)['version']
-        self.update(data, version)
+        if self.version == "0.00.0":
+            self.version = c.aria2.getVersion(c.token)['version']
+        self.update(data)
 
-    def update(self, data, version):
+    def update(self, data):
         """ generate status """
 
         if self.string is not None and \
@@ -202,7 +205,7 @@ class Status:
                                  g.tty['curr_h'] - 1, 0)
 
         s_server = 'server: ' + c.server + ':' + str(c.port) + \
-            ' ' + ('v' + version).join('()')
+            ' ' + ('v' + self.version).join('()')
 
         num_downloads = int(self.data['numActive']) + \
             int(self.data['numWaiting']) + int(self.data['numStopped'])

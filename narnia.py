@@ -10,19 +10,15 @@ import time
 from narnia2.common import Config as c, Globals as g
 from narnia2.common import Header, Status
 from narnia2.download import Download
+from narnia2.process import start_threads, thread_priority_data
 
 
-def get_downloads():
+def create_downloads():
     """ get downloads and create classes """
 
     response = []
     prev_downloads = list(g.downloads)
     g.downloads = []
-
-    active = c.aria2.tellActive(c.token)
-    waiting = c.aria2.tellWaiting(c.token, 0, 100)
-    stopped = c.aria2.tellStopped(c.token, -1, 100)
-    states = [active, waiting, stopped]
 
     def lookup(query):
         """ lookup downloads """
@@ -32,7 +28,7 @@ def get_downloads():
                 return prev_downloads.index(item)
         return -1
 
-    for state in states:
+    for state in g.download_states:
         for item in state:
             response.append(item)
 
@@ -73,7 +69,7 @@ def key_actions(key):
 
         g.status.win.clear()
         g.status.win.noutrefresh()
-        g.status.refresh_data()
+        g.status.update(g.status.data)
 
         for i in range(g.num_downloads):
             g.downloads[i].draw(i + 1, True)
@@ -111,12 +107,12 @@ def key_actions(key):
     def queue_up():
         if g.focused.status == 'waiting':
             c.aria2.changePosition(c.token, g.focused.gid, -1, 'POS_CUR')
-            update_aria_data()          # TODO: Optimize here
+            thread_priority_data()          # TODO: Optimize here
 
     def queue_down():
         if g.focused.status == 'waiting':
             c.aria2.changePosition(c.token, g.focused.gid, 1, 'POS_CUR')
-            update_aria_data()          # TODO: Optimize here
+            thread_priority_data()          # TODO: Optimize here
 
     def purge():
         c.aria2.purgeDownloadResult(c.token)
@@ -154,14 +150,6 @@ def key_actions(key):
         actions.get(key, none)()
 
 
-def update_aria_data():
-    """ request new download/status data """
-
-    get_downloads()
-    g.status.refresh_data()
-    g.timer_data = 0
-
-
 def main(screen):
     """ main """
 
@@ -171,19 +159,20 @@ def main(screen):
     screen.getch()
 
     g.timer_ui = c.refresh_interval * 100
-    g.timer_data = c.refresh_interval * 100
 
     g.header = Header()
     g.status = Status()
+
     g.header.draw(True)
     g.status.draw(True)
 
-    get_downloads()
-    g.status.refresh_data()
+    start_threads()
 
     while True:
         if g.timer_ui == c.refresh_interval * 100:
             g.header.draw(False)
+
+            create_downloads()
 
             if g.num_downloads != 0:
                 if g.focused not in g.downloads:
@@ -202,9 +191,6 @@ def main(screen):
             curses.doupdate()
             g.timer_ui = 0
 
-        if g.timer_data == c.refresh_interval * 100:
-            update_aria_data()
-
         # DEBUGGING
         # g.dbg = 0
         # dbg = curses.newwin(20, g.tty['curr_w'], g.tty['curr_h'] - 20, 0)
@@ -213,7 +199,6 @@ def main(screen):
 
         time.sleep(0.01)
         g.timer_ui += 1
-        g.timer_data += 1
 
         key_in = screen.getch()
         if key_in != -1:

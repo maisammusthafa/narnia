@@ -37,135 +37,136 @@ wait_time = 0.0
 
 
 class PyAria2(object):
-    def __init__(self, host, port, session=None):
+    def __init__(self, host, port, token=''):
         time.sleep(wait_time)
         server_uri = '{}:{:d}/rpc'.format(host, port)
         self.server = xmlrpc.client.ServerProxy(server_uri, allow_none=True)
+        self.token = 'token:{}'.format(token)
 
-    def addUri(self, token, uris, options=None, position=None):
+    def add_uri(self, uris, options=None, position=None):
         time.sleep(wait_time)
-        return self.server.aria2.addUri(token, uris, options, position)
+        return self.server.aria2.addUri(self.token, uris, options, position)
 
-    def addTorrent(self, token, torrent, uris=None, options=None, position=None):
+    def add_torrent(self, torrent, uris=None, options=None, position=None):
         time.sleep(wait_time)
-        return self.server.aria2.addTorrent(token, xmlrpc.client.Binary(open(torrent, 'rb').read()), uris, options, position)
+        return self.server.aria2.addTorrent(self.token, xmlrpc.client.Binary(open(torrent, 'rb').read()), uris, options, position)
 
-    def addMetalink(self, token, metalink, options=None, position=None):
+    def add_metalink(self, metalink, options=None, position=None):
         time.sleep(wait_time)
-        return self.server.aria2.addMetalink(token, xmlrpc.client.Binary(open(metalink, 'rb').read()), options, position)
+        return self.server.aria2.addMetalink(self.token, xmlrpc.client.Binary(open(metalink, 'rb').read()), options, position)
 
-    def remove(self, token, gid):
+    def remove(self, gid):
         time.sleep(wait_time)
-        return self.server.aria2.remove(token, gid)
+        return self.server.aria2.remove(self.token, gid)
 
-    def forceRemove(self, token, gid):
+    def force_remove(self, gid):
         time.sleep(wait_time)
-        return self.server.aria2.forceRemove(token, gid)
+        return self.server.aria2.forceRemove(self.token, gid)
 
-    def pause(self, token, gid):
+    def pause(self, gid):
         time.sleep(wait_time)
-        return self.server.aria2.pause(token, gid)
+        return self.server.aria2.pause(self.token, gid)
 
-    def pauseAll(self, token):
+    def pause_all(self):
         time.sleep(wait_time)
-        return self.server.aria2.pauseAll(token)
+        return self.server.aria2.pauseAll(self.token)
 
-    def forcePause(self, token, gid):
+    def force_pause(self, gid):
         time.sleep(wait_time)
-        return self.server.aria2.forcePause(token, gid)
+        return self.server.aria2.forcePause(self.token, gid)
 
-    def forcePauseAll(self, token):
+    def force_pause_all(self):
         time.sleep(wait_time)
-        return self.server.aria2.forcePauseAll(token)
+        return self.server.aria2.forcePauseAll(self.token)
 
-    def unpause(self, token, gid):
+    def unpause(self, gid):
         time.sleep(wait_time)
-        return self.server.aria2.unpause(token, gid)
+        return self.server.aria2.unpause(self.token, gid)
 
-    def unpauseAll(self, token):
+    def unpause_all(self):
         time.sleep(wait_time)
-        return self.server.aria2.unpauseAll(token)
+        return self.server.aria2.unpauseAll(self.token)
 
-    def tellStatus(self, token, gid, keys=None):
+    def tell_status(self, gid, keys=None):
         time.sleep(wait_time)
-        return self.server.aria2.tellStatus(token, gid, keys)
+        return self.server.aria2.tellStatus(self.token, gid, keys)
 
-    def getUris(self, token, gid):
+    def get_uris(self, gid):
         time.sleep(wait_time)
-        return self.server.aria2.getUris(token, gid)
+        return self.server.aria2.getUris(self.token, gid)
 
-    def getFiles(self, token, gid):
+    def get_files(self, gid):
         time.sleep(wait_time)
-        return self.server.aria2.getFiles(token, gid)
+        return self.server.aria2.getFiles(self.token, gid)
 
-    def getPeers(self, token, gid):
+    def get_peers(self, gid):
         time.sleep(wait_time)
-        return self.server.aria2.getPeers(token, gid)
+        return self.server.aria2.getPeers(self.token, gid)
 
-    def getServers(self, token, gid):
+    def get_servers(self, gid):
         time.sleep(wait_time)
-        return self.server.aria2.getServers(token, gid)
+        return self.server.aria2.getServers(self.token, gid)
 
-    def tellActive(self, token, keys=None):
+    def tell_active(self, keys=None):
         time.sleep(wait_time)
-        return self.server.aria2.tellActive(token, keys)
+        return self.server.aria2.tellActive(self.token, keys)
 
-    def tellWaiting(self, token, offset, num, keys=None):
+    def tell_waiting(self, offset, num, keys=None):
         time.sleep(wait_time)
-        return self.server.aria2.tellWaiting(token, offset, num, keys)
+        return self.server.aria2.tellWaiting(self.token, offset, num, keys)
 
-    def tellStopped(self, token, offset, num, keys=None):
+    def tell_stopped(self, offset, num, keys=None):
         time.sleep(wait_time)
-        return self.server.aria2.tellStopped(token, offset, num, keys)
+        return self.server.aria2.tellStopped(self.token, offset, num, keys)
 
-    def changePosition(self, token, gid, pos, how):
+    def change_position(self, gid, pos, how):
         time.sleep(wait_time)
-        return self.server.aria2.changePosition(token, gid, pos, how)
+        return self.server.aria2.changePosition(self.token, gid, pos, how)
 
-    def changeUri(self, token, gid, fileIndex, delUris, addUris, position=None):
+    def change_uri(self, gid, fileIndex, delUris, addUris, position=None):
         time.sleep(wait_time)
-        return self.server.aria2.changeUri(token, gid, fileIndex, delUris, addUris, position)
+        return self.server.aria2.changeUri(self.token, gid, fileIndex, delUris, addUris, position)
 
-    def getOption(self, token, gid):
+    def get_option(self, gid):
         time.sleep(wait_time)
-        return self.server.aria2.getOption(token, gid)
+        return self.server.aria2.getOption(self.token, gid)
 
-    def changeOption(self, token, gid, options):
+    def change_option(self, gid, options):
         time.sleep(wait_time)
-        return self.server.aria2.changeOption(token, gid, options)
+        return self.server.aria2.changeOption(self.token, gid, options)
 
-    def getGlobalOption(self, token):
+    def get_global_option(self):
         time.sleep(wait_time)
-        return self.server.aria2.getGlobalOption(token)
+        return self.server.aria2.getGlobalOption(self.token)
 
-    def changeGlobalOption(self, token, options):
+    def change_global_option(self, options):
         time.sleep(wait_time)
-        return self.server.aria2.changeGlobalOption(token, options)
+        return self.server.aria2.changeGlobalOption(self.token, options)
 
-    def getGlobalStat(self, token):
+    def get_global_stat(self):
         time.sleep(wait_time)
-        return self.server.aria2.getGlobalStat(token)
+        return self.server.aria2.getGlobalStat(self.token)
 
-    def purgeDownloadResult(self, token):
+    def purge_download_result(self):
         time.sleep(wait_time)
-        return self.server.aria2.purgeDownloadResult(token)
+        return self.server.aria2.purgeDownloadResult(self.token)
 
-    def removeDownloadResult(self, token, gid):
+    def remove_download_result(self, gid):
         time.sleep(wait_time)
-        return self.server.aria2.removeDownloadResult(token, gid)
+        return self.server.aria2.removeDownloadResult(self.token, gid)
 
-    def getVersion(self, token):
+    def get_version(self):
         time.sleep(wait_time)
-        return self.server.aria2.getVersion(token)
+        return self.server.aria2.getVersion(self.token)
 
-    def getSessionInfo(self, token):
+    def get_session_info(self):
         time.sleep(wait_time)
-        return self.server.aria2.getSessionInfo(token)
+        return self.server.aria2.getSessionInfo(self.token)
 
-    def shutdown(self, token):
+    def shutdown(self):
         time.sleep(wait_time)
-        return self.server.aria2.shutdown(token)
+        return self.server.aria2.shutdown(self.token)
 
-    def forceShutdown(self, token):
+    def force_shutdown(self):
         time.sleep(wait_time)
-        return self.server.aria2.forceShutdown(token)
+        return self.server.aria2.forceShutdown(self.token)

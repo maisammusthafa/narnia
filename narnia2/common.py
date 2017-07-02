@@ -27,7 +27,6 @@ class Globals:
     num_downloads = 0
     focused = None
 
-    timer_data = 0
     timer_ui = 0
     dbg = 0
 
@@ -98,10 +97,10 @@ class Config:
     profiles = load_conf('profiles', '[default]')
 
     profile = config['Connection'].get('profile', 'default')
-    server = profiles[profile].get('server', 'localhost')
+    server = profiles[profile].get('server', 'http://localhost')
     port = profiles[profile].getint('port', 6800)
-    token = 'token:' + profiles[profile].get('rpc-secret', '')
-    aria2 = pyaria2.PyAria2(server, port, None)
+    token = profiles[profile].get('rpc-secret', '')
+    aria2 = pyaria2.PyAria2(server, port, token)
 
     interface = config['UI']
     keys = Keybindings(config['Keybindings'])
@@ -184,9 +183,9 @@ class Status:
     def refresh_data(self):
         """ refresh status bar data """
 
-        data = c.aria2.getGlobalStat(c.token)
+        data = c.aria2.get_global_stat()
         if self.version == "0.00.0":
-            self.version = c.aria2.getVersion(c.token)['version']
+            self.version = c.aria2.get_version()['version']
         self.update(data)
 
     def update(self, data):

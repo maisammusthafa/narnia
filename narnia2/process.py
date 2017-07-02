@@ -8,11 +8,13 @@ import queue
 from narnia2.common import Config as c, Globals as g
 from narnia2.download import Download
 
+# TODO: handle thread errors
+
 
 def request_data():
-    active = c.aria2.tellActive(c.token)
-    waiting = c.aria2.tellWaiting(c.token, 0, 100)
-    stopped = c.aria2.tellStopped(c.token, -1, 100)
+    active = c.aria2.tell_active()
+    waiting = c.aria2.tell_waiting(0, 100)
+    stopped = c.aria2.tell_stopped(-1, 100)
 
     g.status.refresh_data()
     g.download_states = [active, waiting, stopped]

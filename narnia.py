@@ -94,34 +94,34 @@ def key_actions(key):
 
     def pause():
         if g.focused.status == 'active' or g.focused.status == 'waiting':
-            c.aria2.pause(c.token, g.focused.gid)
+            c.aria2.pause(g.focused.gid)
         elif g.focused.status == 'paused':
-            c.aria2.unpause(c.token, g.focused.gid)
+            c.aria2.unpause(g.focused.gid)
 
     def pause_all():
-        if not c.aria2.tellActive(c.token):
-            c.aria2.unpauseAll(c.token)
+        if not c.aria2.tell_active():
+            c.aria2.unpause_all()
         else:
-            c.aria2.pauseAll(c.token)
+            c.aria2.pause_all()
 
     def queue_up():
         if g.focused.status == 'waiting':
-            c.aria2.changePosition(c.token, g.focused.gid, -1, 'POS_CUR')
+            c.aria2.change_position(g.focused.gid, -1, 'POS_CUR')
             thread_priority_data()          # TODO: Optimize here
 
     def queue_down():
         if g.focused.status == 'waiting':
-            c.aria2.changePosition(c.token, g.focused.gid, 1, 'POS_CUR')
+            c.aria2.change_position(g.focused.gid, 1, 'POS_CUR')
             thread_priority_data()          # TODO: Optimize here
 
     def purge():
-        c.aria2.purgeDownloadResult(c.token)
+        c.aria2.purge_download_result()
 
     def retry():
         if g.focused.status == "error":
             url = g.focused.data['files'][0]['uris'][0]['uri'].strip()
-            c.aria2.removeDownloadResult(c.token, g.focused.gid)
-            c.aria2.addUri(c.token, [url])
+            c.aria2.remove_download_result(g.focused.gid)
+            c.aria2.add_uri([url])
 
     def none():
         pass
@@ -167,6 +167,7 @@ def main(screen):
     g.status.draw(True)
 
     start_threads()
+    # TODO: [BUG] initial delay even on fast networks
 
     while True:
         if g.timer_ui == c.refresh_interval * 100:

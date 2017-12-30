@@ -1,4 +1,4 @@
-#!/bin/env python3
+#!/usr/bin/env python3
 """ common objects """
 
 import argparse
@@ -8,8 +8,9 @@ import io
 import os
 import sys
 
-import narnia2.pyaria2 as pyaria2
+import narnia.pyaria2 as pyaria2
 
+from narnia.colorstr import add_cstr
 from datetime import datetime
 
 class Globals:
@@ -24,6 +25,7 @@ class Globals:
 
     header = None
     status = None
+    mini_status = None
 
     downloads = []
     download_states = [[], [], []]
@@ -64,14 +66,21 @@ class Keybindings:
 
 class Colors:
     def __init__(self, colors):
-        self.active = colors.get('dl-active', 'base2').join('<>')
-        self.paused = colors.get('dl-paused', 'default').join('<>')
-        self.skip = colors.get('dl-skip', 'default').join('<>')
-        self.waiting = colors.get('dl-waiting', 'blue').join('<>')
-        self.pending = colors.get('dl-pending', 'blue').join('<>')
-        self.complete = colors.get('dl-complete', 'green').join('<>')
-        self.removed = colors.get('dl-removed', 'yellow').join('<>')
-        self.error = colors.get('dl-error', 'red').join('<>')
+        self.enable_colors = colors.getboolean('colors', True)
+        if self.enable_colors:
+            self.status_colors = {
+                    'active': colors.get('dl-active', 'base2').join('<>'),
+                    'paused': colors.get('dl-paused', 'default').join('<>'),
+                    'skip': colors.get('dl-skip', 'default').join('<>'),
+                    'waiting': colors.get('dl-waiting', 'blue').join('<>'),
+                    'pending': colors.get('dl-pending', 'blue').join('<>'),
+                    'complete': colors.get('dl-complete', 'green').join('<>'),
+                    'removed': colors.get('dl-removed', 'yellow').join('<>'),
+                    'error': colors.get('dl-error', 'red').join('<>'),
+                    }
+        else:
+            self.status_colors = {
+                    }
 
 
 class Widths:
@@ -203,7 +212,7 @@ class Header:
 
         self.win.clear()
         try:
-            self.win.addstr(0, 0, self.string, curses.A_BOLD)
+            add_cstr(0, 0, '<header.b>' + self.string + '</header.b>', self.win)
         except curses.error:
             pass
         self.win.noutrefresh()
@@ -268,7 +277,7 @@ class Status:
         self.win.noutrefresh()
 
         try:
-            self.win.addstr(0, 0, self.string, curses.A_BOLD)
+            add_cstr(0, 0, '<status.b>' + self.string + '</status.b>', self.win)
         except curses.error:
             pass
         self.win.noutrefresh()

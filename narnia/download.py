@@ -1,12 +1,15 @@
-#!/bin/env python3
+#!/usr/bin/env python3
 """ provides download class """
 
 import curses
 import os
 import re
+import urllib.parse
+import urllib.request
 
-from narnia2.common import Config as c, Globals as g
-from narnia2.common import create_row
+from narnia.colorstr import add_cstr
+from narnia.common import Config as c, Globals as g
+from narnia.common import create_row
 
 
 class Download:
@@ -44,12 +47,20 @@ class Download:
             self.changed = True
 
         self.data = data
+        self.url = self.data['files'][0]['uris'][0]['uri'].strip()
         self.name = self.data['bittorrent']['info']['name'] if self.torrent \
             else os.path.basename(self.data['files'][0]['path'])
+        if self.name == '':
+            self.name = os.path.basename(urllib.parse.urlsplit(self.url)[2])
         if self.name == '':
             self.name = 'N/A'
 
         self.size = int(self.data['totalLength'])
+
+        # TODO: Implement threading for manual size fetching
+        # if self.size == 0:
+            # self.dbg = urllib.request.FancyURLopener().open(self.url).info()['Content-Length']
+
         self.done = int(self.data['completedLength'])
         self.status = self.data['status']
         self.progress = (self.done / self.size) if self.size != 0 else 0
@@ -144,8 +155,11 @@ class Download:
 
         self.win.clear()
         self.win.mvwin(y_pos, 0)
+        self.color = c.colors.status_colors.get(self.status, '<default>')
+        if self.highlight != 0:
+            self.color = self.color.replace('>', '.r>')
         try:
-            self.win.addstr(0, 0, self.row, self.highlight)
+            add_cstr(0, 0, self.color + self.row + self.color.replace('<', '</'), self.win)
         except curses.error:
             pass
         self.win.noutrefresh()

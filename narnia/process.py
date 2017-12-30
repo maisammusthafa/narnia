@@ -1,12 +1,12 @@
-#!/bin/env python3
+#!/usr/bin/env python3
 """ handles all threads and queues """
 
 import threading
 import time
 import queue
 
-from narnia2.common import Config as c, Globals as g
-from narnia2.download import Download
+from narnia.common import Config as c, Globals as g
+from narnia.download import Download
 
 # TODO: handle thread errors
 

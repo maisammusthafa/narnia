@@ -1,4 +1,4 @@
-#!/bin/env python3
+#!/usr/bin/env python3
 """ provides wrapper class for aria2 rpc """
 
 import time
@@ -33,6 +33,7 @@ Author: Killua
 Email: killua_hzl@163.com
 '''
 
+# TODO: Remove wait_time
 wait_time = 0.0
 
 

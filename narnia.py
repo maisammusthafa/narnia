@@ -1,4 +1,4 @@
-#!/bin/env python3
+#!/usr/bin/env python3
 """ narnia """
 
 import curses
@@ -6,10 +6,11 @@ import os
 import sys
 import time
 
-from narnia2.common import Config as c, Globals as g
-from narnia2.common import Header, Status
-from narnia2.download import Download
-from narnia2.process import start_threads, thread_priority_data, thread_action
+from narnia.colorstr import add_cstr, init_colors
+from narnia.common import Config as c, Globals as g
+from narnia.common import Header, Status
+from narnia.download import Download
+from narnia.process import start_threads, thread_priority_data, thread_action
 
 
 def create_downloads():
@@ -66,6 +67,10 @@ def key_actions(key):
 
         g.header.update()
 
+        g.mini_status.clear()
+        g.mini_status.noutrefresh()
+        g.mini_status = curses.newwin(1, g.tty['curr_w'], g.tty['curr_h'] - 2, 0)
+
         g.status.win.clear()
         g.status.win.noutrefresh()
         g.status.update(g.status.data)
@@ -79,7 +84,7 @@ def key_actions(key):
     def confirm_del():
         g.status.win.nodelay(False)
         curses.echo(True)
-        g.status.win.addstr(0, 0, 'confirm deletion? [y/N] ' + ' ' * (int(g.tty['curr_w']) - 25), curses.A_BOLD)
+        add_cstr(0, 0, '<red.b>confirm deletion? [y/N] </red.b>' + ' ' * (int(g.tty['curr_w']) - 25), g.status.win)
         curses.echo(False)
         response = g.status.win.getch()
         g.status.win.nodelay(True)
@@ -132,9 +137,7 @@ def key_actions(key):
         if g.focused.status == "error":
             url = g.focused.data['files'][0]['uris'][0]['uri'].strip()
             thread_action("c.aria2.remove_download_result('{}')".format(g.focused.gid))
-            # c.aria2.remove_download_result(g.focused.gid)
             thread_action("c.aria2.add_uri(['{}'])".format(url))
-            # c.aria2.add_uri([url])
 
     def delete():
         # if screen.option == Download.num_rows - 1:
@@ -144,16 +147,16 @@ def key_actions(key):
         elif confirm_del():
             # TODO: Change focus to adjacent result once removed
             thread_action("c.aria2.remove('{}')".format(g.focused.gid))
+            refresh_windows()
         # del Download.expanded[item['gid']]
 
     def add():
         # TODO: [BUG] URL Validation, refresh status after invalid URL
         g.status.win.nodelay(False)
         curses.echo(True)
-        g.status.win.addstr(0, 0, 'add: ' + ' ' * (int(g.tty['curr_w']) - 6), curses.A_BOLD)
+        add_cstr(0, 0, '<base3.b>add: </base3.b>' + ' ' * (int(g.tty['curr_w']) - 6), g.status.win)
         url = g.status.win.getstr(0, 5, 100)
         thread_action("c.aria2.add_uri([{}])".format(url.strip()))
-        g.log("c.aria2.add_uri([{}])".format(url.strip()))
         curses.echo(False)
         g.status.win.nodelay(True)
         g.status.win.noutrefresh()
@@ -181,7 +184,7 @@ def key_actions(key):
         }
 
     if g.num_downloads != 0 or \
-            key == c.keys.quit or key == curses.KEY_RESIZE:
+            key == c.keys.add or key == c.keys.quit or key == curses.KEY_RESIZE:
         actions.get(key, none)()
 
 
@@ -189,6 +192,7 @@ def main(screen):
     """ main """
 
     curses.curs_set(False)
+    init_colors()
     screen.nodelay(True)
     screen.keypad(True)
     screen.getch()
@@ -197,13 +201,13 @@ def main(screen):
 
     g.header = Header()
     g.status = Status()
+    g.mini_status = curses.newwin(1, g.tty['curr_w'], g.tty['curr_h'] - 2, 0)
 
     g.header.draw(True)
     g.status.draw(True)
 
     start_threads()
     # TODO: [BUG] initial delay even on fast networks
-
 
     while True:
         if g.timer_ui == c.refresh_interval * 100:
@@ -220,6 +224,11 @@ def main(screen):
                 for i in range(g.num_downloads):
                     g.downloads[i].draw(i + 1, False)
 
+                mini_status_data = '[{}] {}'.format(g.focused.gid, g.focused.name)
+                mini_status_data += ' ' * (g.tty['curr_w'] - len(mini_status_data) - 1)
+                add_cstr(0, 0, mini_status_data, g.mini_status)
+                g.mini_status.noutrefresh()
+
             g.status.draw(False)
 
             g.tty['prev_h'] = g.tty['curr_h']
@@ -227,12 +236,6 @@ def main(screen):
 
             curses.doupdate()
             g.timer_ui = 0
-
-        # DEBUGGING
-        # g.dbg = 0
-        # dbg = curses.newwin(20, g.tty['curr_w'], g.tty['curr_h'] - 20, 0)
-        # dbg.addstr(0, 0, str(g.dbg))
-        # dbg.noutrefresh()
 
         time.sleep(0.01)
         g.timer_ui += 1

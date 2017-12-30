@@ -7,6 +7,7 @@ import os
 import sys
 import time
 
+import narnia2.pyaria2 as pyaria2
 from narnia2.common import Config as c, Globals as g
 from narnia2.common import Header, Status
 from narnia2.download import Download
@@ -77,6 +78,16 @@ def key_actions(key):
 
         g.timer_ui = (c.refresh_interval * 100) - 1
 
+    def confirm_del():
+        g.status.win.nodelay(False)
+        curses.echo(True)
+        g.status.win.addstr(0, 0, 'confirm deletion? [y/N] ' + ' ' * (int(g.tty['curr_w']) - 25), curses.A_BOLD)
+        curses.echo(False)
+        response = g.status.win.getch()
+        g.status.win.nodelay(True)
+        g.status.win.noutrefresh()
+        return True if response == ord('y') else False
+
     def nav_up():
         # TODO: implement nav_up on delete
 
@@ -127,27 +138,27 @@ def key_actions(key):
             thread_action("c.aria2.add_uri(['{}'])".format(url))
             # c.aria2.add_uri([url])
 
-    def confirm():
-        g.status.win.nodelay(False)
-        curses.echo(True)
-        g.status.win.addstr(0, 0, 'confirm deletion? [Y/n] ' + ' ' * (int(g.tty['curr_w']) - 25), curses.A_BOLD)
-        curses.echo(False)
-        response = g.status.win.getch()
-        g.status.win.nodelay(True)
-        g.status.win.noutrefresh()
-        return False if response == ord('n') else True
-
     def delete():
-        if not confirm():
-            return
         # if screen.option == Download.num_rows - 1:
             # screen.option -= 1
         if g.focused.status == 'complete' or g.focused.status == 'removed' or g.focused.status == 'error':
             thread_action("c.aria2.remove_download_result('{}')".format(g.focused.gid))
-        else:
+        elif confirm_del():
             # TODO: Change focus to adjacent result once removed
             thread_action("c.aria2.remove('{}')".format(g.focused.gid))
         # del Download.expanded[item['gid']]
+
+    def add():
+        # TODO: [BUG] URL Validation, refresh status after invalid URL
+        g.status.win.nodelay(False)
+        curses.echo(True)
+        g.status.win.addstr(0, 0, 'add: ' + ' ' * (int(g.tty['curr_w']) - 6), curses.A_BOLD)
+        url = g.status.win.getstr(0, 5, 100)
+        thread_action("c.aria2.add_uri([{}])".format(url.strip()))
+        g.log("c.aria2.add_uri([{}])".format(url.strip()))
+        curses.echo(False)
+        g.status.win.nodelay(True)
+        g.status.win.noutrefresh()
 
     def none():
         pass
@@ -160,7 +171,7 @@ def key_actions(key):
         c.keys.key_down: nav_down,
         c.keys.pause_all: pause_all,
         c.keys.pause: pause,
-        # c.keys.add: add,
+        c.keys.add: add,
         c.keys.delete: delete,
         c.keys.purge: purge,
         c.keys.queue_up: queue_up,

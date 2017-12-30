@@ -30,7 +30,6 @@ def queue_data():
     while True:
         if g.queue.queue.count('request_data()') < 2:
             g.queue.put('request_data()')
-            g.log(list(g.queue.queue))
         time.sleep(1)
 
 

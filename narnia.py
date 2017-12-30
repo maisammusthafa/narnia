@@ -1,13 +1,11 @@
 #!/bin/env python3
 """ narnia """
 
-import argparse
 import curses
 import os
 import sys
 import time
 
-import narnia2.pyaria2 as pyaria2
 from narnia2.common import Config as c, Globals as g
 from narnia2.common import Header, Status
 from narnia2.download import Download

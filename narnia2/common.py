@@ -1,10 +1,12 @@
 #!/bin/env python3
 """ common objects """
 
+import argparse
 import configparser
 import curses
 import io
 import os
+import sys
 
 import narnia2.pyaria2 as pyaria2
 
@@ -104,10 +106,38 @@ class Config:
     profiles = load_conf('profiles', '[default]')
 
     profile = config['Connection'].get('profile', 'default')
-    server = profiles[profile].get('server', 'http://localhost')
-    port = profiles[profile].getint('port', 6800)
-    token = profiles[profile].get('rpc-secret', '')
+
+    parser = argparse.ArgumentParser(description='A curses-based console client for aria2')
+    parser.add_argument('-c', '--connection', help='Pre-configured narnia connection profile to use', default=profile)
+    parser.add_argument('-s', '--server', help='Server to connect to')
+    parser.add_argument('-p', '--port', help='Port to connect through')
+    parser.add_argument('-t', '--token', help='aria2 RPC secret token')
+    parser.add_argument('-d', '--delete', help='Delete a download using its GID')
+    parser.add_argument('-i', '--info', help='Returns info on a download using its GID')
+    parser.add_argument('file', nargs='*')
+
+    args = parser.parse_args()
+    profile = args.connection
+
+    server = profiles[profile].get('server', 'localhost') if args.server is None else \
+        args.server
+    port = profiles[profile].getint('port', 6800) if args.port is None else \
+        int(args.port)
+    token = profiles[profile].get('rpc-secret', '') if args.token is None else \
+        args.token
+
     aria2 = pyaria2.PyAria2(server, port, token)
+
+    if args.file != []:
+        for i_file in args.file:
+            aria2.add_uri([i_file])
+        sys.exit()
+    elif args.delete is not None:
+        aria2.remove_download_result(args.delete)
+        sys.exit()
+    elif args.info is not None:
+        print(aria2.tell_status(token, args.info))
+        sys.exit()
 
     interface = config['UI']
     keys = Keybindings(config['Keybindings'])

@@ -22,20 +22,21 @@ def request_data():
 
 def consume_queue():
     while True:
-        g.queue.get()()
+        eval(g.queue.get())
         g.queue.task_done()
 
 
 def queue_data():
     while True:
-        if g.queue.queue.count(request_data) < 2:
-            g.queue.put(request_data)
+        if g.queue.queue.count('request_data()') < 2:
+            g.queue.put('request_data()')
+            g.log(list(g.queue.queue))
         time.sleep(1)
 
 
 def queue_priority_data():
-    if request_data not in g.queue.queue:
-        g.queue.put(request_data)
+    if 'request_data()' not in g.queue.queue:
+        g.queue.put('request_data()')
 
 
 def queue_action(item):
@@ -52,5 +53,5 @@ def thread_action(action):
 
 def start_threads():
     g.queue = queue.Queue(maxsize=10)
-    threading.Thread(target=consume_queue, daemon=True).start()
     threading.Thread(target=queue_data, daemon=True).start()
+    threading.Thread(target=consume_queue, daemon=True).start()

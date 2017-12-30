@@ -38,7 +38,6 @@ wait_time = 0.0
 
 class PyAria2(object):
     def __init__(self, host, port, token=''):
-        time.sleep(wait_time)
         server_uri = '{}:{:d}/rpc'.format(host, port)
         self.server = xmlrpc.client.ServerProxy(server_uri, allow_none=True)
         self.token = 'token:{}'.format(token)

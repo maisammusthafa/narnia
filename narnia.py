@@ -10,7 +10,7 @@ import time
 from narnia2.common import Config as c, Globals as g
 from narnia2.common import Header, Status
 from narnia2.download import Download
-from narnia2.process import start_threads, thread_priority_data
+from narnia2.process import start_threads, thread_priority_data, thread_action
 
 
 def create_downloads():
@@ -94,34 +94,60 @@ def key_actions(key):
 
     def pause():
         if g.focused.status == 'active' or g.focused.status == 'waiting':
-            c.aria2.pause(g.focused.gid)
+            thread_action("c.aria2.pause('{}')".format(g.focused.gid))
         elif g.focused.status == 'paused':
-            c.aria2.unpause(g.focused.gid)
+            thread_action("c.aria2.unpause('{}')".format(g.focused.gid))
 
     def pause_all():
         if not c.aria2.tell_active():
-            c.aria2.unpause_all()
+            thread_action('c.aria2.unpause_all()')
         else:
-            c.aria2.pause_all()
+            thread_action('c.aria2.pause_all()')
 
     def queue_up():
+        # TODO: [BUG] Rapid toggle freezes future commands
         if g.focused.status == 'waiting':
-            c.aria2.change_position(g.focused.gid, -1, 'POS_CUR')
+            thread_action("c.aria2.change_position('{}', -1, 'POS_CUR')".format(g.focused.gid))
             thread_priority_data()          # TODO: Optimize here
 
     def queue_down():
         if g.focused.status == 'waiting':
-            c.aria2.change_position(g.focused.gid, 1, 'POS_CUR')
+            thread_action("c.aria2.change_position('{}', 1, 'POS_CUR')".format(g.focused.gid))
             thread_priority_data()          # TODO: Optimize here
 
     def purge():
-        c.aria2.purge_download_result()
+        thread_action('c.aria2.purge_download_result()')
 
     def retry():
+        # TODO: TEST
         if g.focused.status == "error":
             url = g.focused.data['files'][0]['uris'][0]['uri'].strip()
-            c.aria2.remove_download_result(g.focused.gid)
-            c.aria2.add_uri([url])
+            thread_action("c.aria2.remove_download_result('{}')".format(g.focused.gid))
+            # c.aria2.remove_download_result(g.focused.gid)
+            thread_action("c.aria2.add_uri(['{}'])".format(url))
+            # c.aria2.add_uri([url])
+
+    def confirm():
+        g.status.win.nodelay(False)
+        curses.echo(True)
+        g.status.win.addstr(0, 0, 'confirm deletion? [Y/n] ' + ' ' * (int(g.tty['curr_w']) - 25), curses.A_BOLD)
+        curses.echo(False)
+        response = g.status.win.getch()
+        g.status.win.nodelay(True)
+        g.status.win.noutrefresh()
+        return False if response == ord('n') else True
+
+    def delete():
+        if not confirm():
+            return
+        # if screen.option == Download.num_rows - 1:
+            # screen.option -= 1
+        if g.focused.status == 'complete' or g.focused.status == 'removed' or g.focused.status == 'error':
+            thread_action("c.aria2.remove_download_result('{}')".format(g.focused.gid))
+        else:
+            # TODO: Change focus to adjacent result once removed
+            thread_action("c.aria2.remove('{}')".format(g.focused.gid))
+        # del Download.expanded[item['gid']]
 
     def none():
         pass
@@ -135,7 +161,7 @@ def key_actions(key):
         c.keys.pause_all: pause_all,
         c.keys.pause: pause,
         # c.keys.add: add,
-        # c.keys.delete: delete,
+        c.keys.delete: delete,
         c.keys.purge: purge,
         c.keys.queue_up: queue_up,
         c.keys.queue_down: queue_down,
@@ -168,6 +194,7 @@ def main(screen):
 
     start_threads()
     # TODO: [BUG] initial delay even on fast networks
+
 
     while True:
         if g.timer_ui == c.refresh_interval * 100:

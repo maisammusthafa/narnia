@@ -8,6 +8,7 @@ import os
 
 import narnia2.pyaria2 as pyaria2
 
+from datetime import datetime
 
 class Globals:
     tty = {}
@@ -31,6 +32,12 @@ class Globals:
     dbg = 0
 
     queue = None
+
+    def log(message):
+        with open('log.txt', 'a') as log_file:
+            time = datetime.now().strftime('%H:%M:%S')
+            line = '{} {}\n'.format(time, message)
+            log_file.write(line)
 
 
 g = Globals

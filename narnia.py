@@ -91,7 +91,7 @@ def key_actions(key):
     def confirm_del():
         g.status.win.nodelay(False)
         curses.echo(True)
-        add_cstr(0, 0, '<red.b>confirm deletion? [y/N] </red.b>' + ' ' * (int(g.tty['curr_w']) - 25), g.status.win)
+        add_cstr(0, 0, '<red.b>confirm deletion? [y/N] </red.b>' + ' ' * (int(g.tty['curr_w']) - 33), g.status.win)
         curses.echo(False)
         response = g.status.win.getch()
         g.status.win.nodelay(True)
@@ -174,7 +174,7 @@ def key_actions(key):
     def add():
         g.status.win.nodelay(False)
         curses.echo(True)
-        add_cstr(0, 0, '<base3.b>add: </base3.b>' + ' ' * (int(g.tty['curr_w']) - 6), g.status.win)
+        add_cstr(0, 0, '<base3.b>add: </base3.b>' + ' ' * (int(g.tty['curr_w']) - 14), g.status.win)
         url = g.status.win.getstr(0, 5, 200)
         thread_action("c.aria2.add_uri([{}])".format(url.strip()))
         curses.echo(False)

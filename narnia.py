@@ -215,8 +215,11 @@ def main(screen):
 
     g.header = Header()
     g.status = Status()
+
     g.file_status = curses.newwin(1, g.tty['curr_w'], g.tty['curr_h'] - 2, 0)
     g.pos_status = curses.newwin(1, 8, g.tty['curr_h'] - 1, g.tty['curr_w'] - 8)
+    add_cstr(0, 0, '<status.b>  [top]</status.b>', g.pos_status)
+    g.pos_status.noutrefresh()
 
     g.header.draw(True)
     g.status.draw(True)

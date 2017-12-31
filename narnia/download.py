@@ -63,8 +63,12 @@ class Download:
 
         self.done = int(self.data['completedLength'])
         self.status = self.data['status']
-        self.progress = (self.done / self.size) if self.size != 0 else 0
-        # TODO: [bug] progress percentage is 0 on complete for 0 byte files
+
+        if self.size == 0:
+            self.progress = 1 if self.status == 'complete' else 0
+        else:
+            self.progress = (self.done / self.size)
+
         self.seeds = int(self.data['numSeeders']) if self.torrent else 0
         self.peers = int(self.data['connections'])
         self.dl_speed = int(self.data['downloadSpeed'])

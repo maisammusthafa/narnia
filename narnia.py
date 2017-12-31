@@ -117,7 +117,6 @@ def key_actions(key):
             thread_action('c.aria2.pause_all()')
 
     def queue_up():
-        # TODO: [BUG] Rapid toggle freezes future commands
         if g.focused.status == 'waiting':
             thread_action("c.aria2.change_position('{}', -1, 'POS_CUR')".format(g.focused.gid))
             thread_priority_data()          # TODO: Optimize here

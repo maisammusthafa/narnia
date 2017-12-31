@@ -88,12 +88,10 @@ def key_actions(key):
         curses.echo(False)
         response = g.status.win.getch()
         g.status.win.nodelay(True)
-        g.status.win.noutrefresh()
+        g.status.draw(True)
         return True if response == ord('y') else False
 
     def nav_up():
-        # TODO: implement nav_up on delete
-
         g.focused.highlight = 0
         g.focused = g.downloads[(g.downloads.index(g.focused) - 1) %
                                 g.num_downloads]
@@ -140,18 +138,15 @@ def key_actions(key):
             thread_action("c.aria2.add_uri(['{}'])".format(url))
 
     def delete():
-        # if screen.option == Download.num_rows - 1:
-            # screen.option -= 1
         if g.focused.status == 'complete' or g.focused.status == 'removed' or g.focused.status == 'error':
             thread_action("c.aria2.remove_download_result('{}')".format(g.focused.gid))
+            nav_up()
         elif confirm_del():
-            # TODO: Change focus to adjacent result once removed
             thread_action("c.aria2.remove('{}')".format(g.focused.gid))
-            refresh_windows()
-        # del Download.expanded[item['gid']]
+            g.status.draw(True)
+            nav_up()
 
     def add():
-        # TODO: [BUG] URL Validation, refresh status after invalid URL
         g.status.win.nodelay(False)
         curses.echo(True)
         add_cstr(0, 0, '<base3.b>add: </base3.b>' + ' ' * (int(g.tty['curr_w']) - 6), g.status.win)
@@ -159,7 +154,7 @@ def key_actions(key):
         thread_action("c.aria2.add_uri([{}])".format(url.strip()))
         curses.echo(False)
         g.status.win.nodelay(True)
-        g.status.win.noutrefresh()
+        g.status.draw(True)
 
     def none():
         pass

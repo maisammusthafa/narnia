@@ -45,7 +45,10 @@ class PyAria2(object):
 
     def add_uri(self, uris, options=None, position=None):
         time.sleep(wait_time)
-        return self.server.aria2.addUri(self.token, uris, options, position)
+        try:
+            return self.server.aria2.addUri(self.token, uris, options, position)
+        except:
+            pass
 
     def add_torrent(self, torrent, uris=None, options=None, position=None):
         time.sleep(wait_time)
@@ -65,11 +68,17 @@ class PyAria2(object):
 
     def pause(self, gid):
         time.sleep(wait_time)
-        return self.server.aria2.pause(self.token, gid)
+        try:
+            return self.server.aria2.pause(self.token, gid)
+        except:
+            pass
 
     def pause_all(self):
         time.sleep(wait_time)
-        return self.server.aria2.pauseAll(self.token)
+        try:
+            return self.server.aria2.pauseAll(self.token)
+        except:
+            pass
 
     def force_pause(self, gid):
         time.sleep(wait_time)
@@ -81,11 +90,17 @@ class PyAria2(object):
 
     def unpause(self, gid):
         time.sleep(wait_time)
-        return self.server.aria2.unpause(self.token, gid)
+        try:
+            return self.server.aria2.unpause(self.token, gid)
+        except:
+            pass
 
     def unpause_all(self):
         time.sleep(wait_time)
-        return self.server.aria2.unpauseAll(self.token)
+        try:
+            return self.server.aria2.unpauseAll(self.token)
+        except:
+            pass
 
     def tell_status(self, gid, keys=None):
         time.sleep(wait_time)
@@ -109,15 +124,24 @@ class PyAria2(object):
 
     def tell_active(self, keys=None):
         time.sleep(wait_time)
-        return self.server.aria2.tellActive(self.token, keys)
+        try:
+            return self.server.aria2.tellActive(self.token, keys)
+        except:
+            pass
 
     def tell_waiting(self, offset, num, keys=None):
         time.sleep(wait_time)
-        return self.server.aria2.tellWaiting(self.token, offset, num, keys)
+        try:
+            return self.server.aria2.tellWaiting(self.token, offset, num, keys)
+        except:
+            pass
 
     def tell_stopped(self, offset, num, keys=None):
         time.sleep(wait_time)
-        return self.server.aria2.tellStopped(self.token, offset, num, keys)
+        try:
+            return self.server.aria2.tellStopped(self.token, offset, num, keys)
+        except:
+            pass
 
     def change_position(self, gid, pos, how):
         time.sleep(wait_time)

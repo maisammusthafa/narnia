@@ -59,6 +59,9 @@ def key_actions(key):
         g.tty['curr_h'], g.tty['curr_w'] = list(map(
             int, os.popen('stty size', 'r').read().split()))
 
+        if g.num_downloads < g.tty['curr_h']:
+            g.start_idx = 0
+
         c.widths.name = g.tty['curr_w'] - \
             (c.widths.size + c.widths.status +
              c.widths.progress + c.widths.percent +
@@ -67,16 +70,20 @@ def key_actions(key):
 
         g.header.update()
 
-        g.mini_status.clear()
-        g.mini_status.noutrefresh()
-        g.mini_status = curses.newwin(1, g.tty['curr_w'], g.tty['curr_h'] - 2, 0)
+        g.file_status.clear()
+        g.file_status.noutrefresh()
+        g.file_status = curses.newwin(1, g.tty['curr_w'], g.tty['curr_h'] - 2, 0)
+
+        g.pos_status.clear()
+        g.pos_status.noutrefresh()
+        g.pos_status = curses.newwin(1, 8, g.tty['curr_h'] - 1, g.tty['curr_w'] - 8)
 
         g.status.win.clear()
         g.status.win.noutrefresh()
         g.status.update(g.status.data)
 
-        for i in range(g.num_downloads):
-            g.downloads[i].draw(i + 1, True)
+        for i in range(g.start_idx, min(g.num_downloads, g.tty['curr_h'] - 3) + g.start_idx):
+            g.downloads[i].draw(i - g.start_idx + 1, True)
         curses.doupdate()
 
         g.timer_ui = (c.refresh_interval * 100) - 1
@@ -92,14 +99,33 @@ def key_actions(key):
         return True if response == ord('y') else False
 
     def nav_up():
+        y_pos = g.focused.win.getbegyx()[0]
+        if g.num_downloads > g.tty['curr_h']:
+            if g.focused == g.downloads[0]:
+                g.start_idx = g.num_downloads - (g.tty['curr_h'] - 3)
+            elif y_pos == 1:
+                g.start_idx -= 1
+
         g.focused.highlight = 0
         g.focused = g.downloads[(g.downloads.index(g.focused) - 1) %
                                 g.num_downloads]
+        g.curr_pos = g.downloads.index(g.focused)
+        if g.curr_pos + 1 == g.num_downloads:
+            g.curr_pos = -1
 
     def nav_down():
+        y_pos = g.focused.win.getbegyx()[0]
+        if g.focused == g.downloads[-1]:
+            g.start_idx = 0
+        elif (y_pos + 3) >= g.tty['curr_h']:
+            g.start_idx += 1
+
         g.focused.highlight = 0
         g.focused = g.downloads[(g.downloads.index(g.focused) + 1) %
                                 g.num_downloads]
+        g.curr_pos = g.downloads.index(g.focused)
+        if g.curr_pos + 1 == g.num_downloads:
+            g.curr_pos = -1
 
     def end():
         sys.exit()
@@ -149,7 +175,7 @@ def key_actions(key):
         g.status.win.nodelay(False)
         curses.echo(True)
         add_cstr(0, 0, '<base3.b>add: </base3.b>' + ' ' * (int(g.tty['curr_w']) - 6), g.status.win)
-        url = g.status.win.getstr(0, 5, 100)
+        url = g.status.win.getstr(0, 5, 200)
         thread_action("c.aria2.add_uri([{}])".format(url.strip()))
         curses.echo(False)
         g.status.win.nodelay(True)
@@ -195,7 +221,8 @@ def main(screen):
 
     g.header = Header()
     g.status = Status()
-    g.mini_status = curses.newwin(1, g.tty['curr_w'], g.tty['curr_h'] - 2, 0)
+    g.file_status = curses.newwin(1, g.tty['curr_w'], g.tty['curr_h'] - 2, 0)
+    g.pos_status = curses.newwin(1, 8, g.tty['curr_h'] - 1, g.tty['curr_w'] - 8)
 
     g.header.draw(True)
     g.status.draw(True)
@@ -212,16 +239,30 @@ def main(screen):
             if g.num_downloads != 0:
                 if g.focused not in g.downloads:
                     g.focused = g.downloads[0]
+                    g.curr_pos = g.downloads.index(g.focused)
+                    if g.curr_pos + 1 == g.num_downloads:
+                        g.curr_pos = -1
 
                 g.focused.highlight = curses.A_REVERSE
 
-                for i in range(g.num_downloads):
-                    g.downloads[i].draw(i + 1, False)
+                for i in range(g.start_idx, min(g.num_downloads, g.tty['curr_h'] - 3) + g.start_idx):
+                    g.downloads[i].draw(i - g.start_idx + 1, False)
 
-                mini_status_data = '[{}] {}'.format(g.focused.gid, g.focused.name)
-                mini_status_data += ' ' * (g.tty['curr_w'] - len(mini_status_data) - 1)
-                add_cstr(0, 0, mini_status_data, g.mini_status)
-                g.mini_status.noutrefresh()
+                file_status_data = '[{}] {}'.format(g.focused.gid, g.focused.name)
+                file_status_data += ' ' * (g.tty['curr_w'] - len(file_status_data) - 1)
+                add_cstr(0, 0, file_status_data, g.file_status)
+                g.file_status.noutrefresh()
+
+                if g.curr_pos == 0:
+                    s_pos = '[top]'
+                elif g.curr_pos == -1:
+                    s_pos = '[bot]'
+                else:
+                    s_pos = '[{:2}%]'.format(round(((g.curr_pos + 1) / g.num_downloads) * 100))
+
+                g.pos_status.clear()
+                add_cstr(0, 0, '<status.b>  ' + s_pos + '</status.b>', g.pos_status)
+                g.pos_status.noutrefresh()
 
             g.status.draw(False)
 

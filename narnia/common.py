@@ -23,18 +23,13 @@ class Globals:
 
     suffixes = [(1024 ** 3, ' G'), (1024 ** 2, ' M'), (1024, ' K'), (1, ' B')]
 
-    header = None
-    status = None
-    mini_status = None
-
     downloads = []
     download_states = [[], [], []]
     num_downloads = 0
     focused = None
-
+    start_idx = 0
+    curr_pos = 0
     timer_ui = 0
-    dbg = 0
-
     queue = None
 
     def log(message):
@@ -246,7 +241,7 @@ class Status:
 
         self.changed = True
         self.data = data
-        self.win = curses.newwin(1, g.tty['curr_w'],
+        self.win = curses.newwin(1, g.tty['curr_w'] - 8,
                                  g.tty['curr_h'] - 1, 0)
 
         s_server = 'server: ' + c.server + ':' + str(c.port) + \
@@ -264,7 +259,7 @@ class Status:
             str("%0.0f" % (ul_global / 1024)) + 'K'
 
         self.string = create_row(
-            (s_server, g.tty['curr_w'] - 21 - 20, 3, 'right'),
+            (s_server, g.tty['curr_w'] - 21 - 20 - 8, 3, 'right'),
             (s_downloads, 21, 3, 'right'),
             (s_speed, 20, 1, 'left')
             )

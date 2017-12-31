@@ -76,7 +76,7 @@ def key_actions(key):
 
         g.pos_status.clear()
         g.pos_status.noutrefresh()
-        g.pos_status = curses.newwin(1, 8, g.tty['curr_h'] - 1, g.tty['curr_w'] - 8)
+        g.pos_status = curses.newwin(1, 8, g.tty['curr_h'] - 1, g.tty['curr_w'] - 7)
 
         g.status.win.clear()
         g.status.win.noutrefresh()
@@ -217,7 +217,7 @@ def main(screen):
     g.status = Status()
 
     g.file_status = curses.newwin(1, g.tty['curr_w'], g.tty['curr_h'] - 2, 0)
-    g.pos_status = curses.newwin(1, 8, g.tty['curr_h'] - 1, g.tty['curr_w'] - 8)
+    g.pos_status = curses.newwin(1, 8, g.tty['curr_h'] - 1, g.tty['curr_w'] - 7)
     add_cstr(0, 0, '<status.b>  [top]</status.b>', g.pos_status)
     g.pos_status.noutrefresh()
 
@@ -248,7 +248,7 @@ def main(screen):
                 g.file_status.noutrefresh()
 
                 g.curr_pos = g.downloads.index(g.focused)
-                if g.num_downloads == 1:
+                if g.num_downloads == 1 or g.curr_pos == 0:
                     s_pos = '[top]'
                 elif g.curr_pos + 1 == g.num_downloads:
                     s_pos = '[bot]'

@@ -241,7 +241,7 @@ class Status:
 
         self.changed = True
         self.data = data
-        self.win = curses.newwin(1, g.tty['curr_w'] - 8,
+        self.win = curses.newwin(1, g.tty['curr_w'] - 7,
                                  g.tty['curr_h'] - 1, 0)
 
         s_server = 'server: ' + c.server + ':' + str(c.port) + \
@@ -259,7 +259,7 @@ class Status:
             str("%0.0f" % (ul_global / 1024)) + 'K'
 
         self.string = create_row(
-            (s_server, g.tty['curr_w'] - 21 - 20 - 8, 3, 'right'),
+            (s_server, g.tty['curr_w'] - 21 - 20 - 7, 3, 'right'),
             (s_downloads, 21, 3, 'right'),
             (s_speed, 20, 1, 'left')
             )

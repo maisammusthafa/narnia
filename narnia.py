@@ -109,9 +109,6 @@ def key_actions(key):
         g.focused.highlight = 0
         g.focused = g.downloads[(g.downloads.index(g.focused) - 1) %
                                 g.num_downloads]
-        g.curr_pos = g.downloads.index(g.focused)
-        if g.curr_pos + 1 == g.num_downloads:
-            g.curr_pos = -1
 
     def nav_down():
         y_pos = g.focused.win.getbegyx()[0]
@@ -123,9 +120,6 @@ def key_actions(key):
         g.focused.highlight = 0
         g.focused = g.downloads[(g.downloads.index(g.focused) + 1) %
                                 g.num_downloads]
-        g.curr_pos = g.downloads.index(g.focused)
-        if g.curr_pos + 1 == g.num_downloads:
-            g.curr_pos = -1
 
     def end():
         sys.exit()
@@ -239,9 +233,6 @@ def main(screen):
             if g.num_downloads != 0:
                 if g.focused not in g.downloads:
                     g.focused = g.downloads[0]
-                    g.curr_pos = g.downloads.index(g.focused)
-                    if g.curr_pos + 1 == g.num_downloads:
-                        g.curr_pos = -1
 
                 g.focused.highlight = curses.A_REVERSE
 
@@ -253,9 +244,10 @@ def main(screen):
                 add_cstr(0, 0, file_status_data, g.file_status)
                 g.file_status.noutrefresh()
 
-                if g.curr_pos == 0:
+                g.curr_pos = g.downloads.index(g.focused)
+                if g.num_downloads == 1:
                     s_pos = '[top]'
-                elif g.curr_pos == -1:
+                elif g.curr_pos + 1 == g.num_downloads:
                     s_pos = '[bot]'
                 else:
                     s_pos = '[{:2}%]'.format(round(((g.curr_pos + 1) / g.num_downloads) * 100))

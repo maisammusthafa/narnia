@@ -64,6 +64,7 @@ def init_colors():
 
     curses.init_pair(100, 0, 6)
     curses.init_pair(101, 11, 0)
+    curses.init_pair(102, 1, 0)
 
     colors = {
               'red': 1,
@@ -84,6 +85,7 @@ def init_colors():
               'default': 12,
               'br': 12,
               'header': 100,
-              'status': 101
+              'status': 101,
+              'status_err': 102
              }
 

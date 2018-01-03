@@ -23,6 +23,9 @@ class Globals:
 
     suffixes = [(1024 ** 3, ' G'), (1024 ** 2, ' M'), (1024, ' K'), (1, ' B')]
 
+    header = None
+    status = None
+
     downloads = []
     download_states = [[], [], []]
     num_downloads = 0
@@ -31,6 +34,7 @@ class Globals:
     curr_pos = 0
     timer_ui = 0
     queue = None
+    s_pos = '<status.b>  [top]</status.b>'
 
     def log(message):
         with open('log.txt', 'a') as log_file:
@@ -40,6 +44,43 @@ class Globals:
 
 
 g = Globals
+
+
+def refresh_windows():
+    """ update window widths and refresh them """
+
+    g.tty['curr_h'], g.tty['curr_w'] = list(map(
+        int, os.popen('stty size', 'r').read().split()))
+
+    if g.num_downloads < g.tty['curr_h']:
+        g.start_idx = 0
+
+    c.widths.name = g.tty['curr_w'] - \
+        (c.widths.size + c.widths.status +
+         c.widths.progress + c.widths.percent +
+         c.widths.seeds_peers + c.widths.speed +
+         c.widths.eta)
+
+    g.header.update()
+
+    g.file_status.clear()
+    g.file_status.noutrefresh()
+    g.file_status = curses.newwin(1, g.tty['curr_w'], g.tty['curr_h'] - 2, 0)
+
+    g.pos_status.clear()
+    g.pos_status.noutrefresh()
+    g.pos_status = curses.newwin(1, 8, g.tty['curr_h'] - 1, g.tty['curr_w'] - 7)
+    add_cstr(0, 0, g.s_pos, g.pos_status)
+
+    g.status.win.clear()
+    g.status.win.noutrefresh()
+    g.status.update(g.status.data)
+
+    for i in range(g.start_idx, min(g.num_downloads, g.tty['curr_h'] - 3) + g.start_idx):
+        g.downloads[i].draw(i - g.start_idx + 1, True)
+    curses.doupdate()
+
+    g.timer_ui = (c.refresh_interval * 100) - 1
 
 
 class Keybindings:
@@ -217,35 +258,26 @@ class Status:
     def __init__(self):
         self.data = {'downloadSpeed': '0', 'numActive': '0', 'numStopped': '0',
                      'numStoppedTotal': '0', 'numWaiting': '0', 'uploadSpeed': '0'}
-        self.version = "0.00.0"
+        self.version = '0.00.0'
         self.string = None
         self.update(self.data)
 
     def refresh_data(self):
         """ refresh status bar data """
 
-        data = c.aria2.get_global_stat()
-        if self.version == "0.00.0":
-            self.version = c.aria2.get_version()['version']
-        self.update(data)
+        # TODO: [BUG] Does not set connected status to False if internet is disconnected
+        try:
+            if self.version == '0.00.0':
+                self.version = c.aria2.get_version()['version']
+            data = c.aria2.get_global_stat()
+        except:
+            data = self.data
+            self.version = '0.00.0'
+            c.aria2.connected = False
 
-    def update(self, data):
-        """ generate status """
 
-        if self.string is not None and \
-                g.tty['prev_h'] == g.tty['curr_h'] and \
-                g.tty['prev_w'] == g.tty['curr_w'] and \
-                self.data == data:
-            self.changed = False
-            return
-
-        self.changed = True
-        self.data = data
-        self.win = curses.newwin(1, g.tty['curr_w'] - 7,
-                                 g.tty['curr_h'] - 1, 0)
-
-        s_server = 'server: ' + c.server + ':' + str(c.port) + \
-            ' ' + ('v' + self.version).join('()')
+    def create_string(self):
+        s_server = 'server: {}:{} v({})'.format(c.server, c.port, self.version)
 
         num_downloads = int(self.data['numActive']) + \
             int(self.data['numWaiting']) + int(self.data['numStopped'])
@@ -264,6 +296,23 @@ class Status:
             (s_speed, 20, 1, 'left')
             )
 
+    def update(self, data):
+        """ generate status """
+
+        if self.string is not None and \
+                g.tty['prev_h'] == g.tty['curr_h'] and \
+                g.tty['prev_w'] == g.tty['curr_w'] and \
+                self.data == data:
+            self.changed = False
+            return
+
+        self.changed = True
+        self.data = data
+        self.win = curses.newwin(1, g.tty['curr_w'] - 7,
+                                 g.tty['curr_h'] - 1, 0)
+        self.create_string()
+
+
     def draw(self, init):
         if not self.changed and not init:
             return
@@ -271,8 +320,14 @@ class Status:
         self.win.clear()
         self.win.noutrefresh()
 
+        self.create_string()
+        c_string = self.string
+        if not c.aria2.connected:
+            c_string = self.string.replace('server: ', 'server: <status_err.b>').replace(') ', ')</status_err.b><status.b> ')
+        c_string = '<status.b>{}</status.b>'.format(c_string)
+
         try:
-            add_cstr(0, 0, '<status.b>' + self.string + '</status.b>', self.win)
+            add_cstr(0, 0, c_string, self.win)
         except curses.error:
             pass
         self.win.noutrefresh()

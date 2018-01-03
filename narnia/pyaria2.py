@@ -42,6 +42,7 @@ class PyAria2(object):
         server_uri = '{}:{:d}/rpc'.format(host, port)
         self.server = xmlrpc.client.ServerProxy(server_uri, allow_none=True)
         self.token = 'token:{}'.format(token)
+        self.connected = True
 
     def add_uri(self, uris, options=None, position=None):
         time.sleep(wait_time)
@@ -60,7 +61,10 @@ class PyAria2(object):
 
     def remove(self, gid):
         time.sleep(wait_time)
-        return self.server.aria2.remove(self.token, gid)
+        try:
+            return self.server.aria2.remove(self.token, gid)
+        except:
+            pass
 
     def force_remove(self, gid):
         time.sleep(wait_time)
@@ -104,15 +108,24 @@ class PyAria2(object):
 
     def tell_status(self, gid, keys=None):
         time.sleep(wait_time)
-        return self.server.aria2.tellStatus(self.token, gid, keys)
+        try:
+            return self.server.aria2.tellStatus(self.token, gid, keys)
+        except:
+            pass
 
     def get_uris(self, gid):
         time.sleep(wait_time)
-        return self.server.aria2.getUris(self.token, gid)
+        try:
+            return self.server.aria2.getUris(self.token, gid)
+        except:
+            pass
 
     def get_files(self, gid):
         time.sleep(wait_time)
-        return self.server.aria2.getFiles(self.token, gid)
+        try:
+            return self.server.aria2.getFiles(self.token, gid)
+        except:
+            pass
 
     def get_peers(self, gid):
         time.sleep(wait_time)
@@ -127,25 +140,31 @@ class PyAria2(object):
         try:
             return self.server.aria2.tellActive(self.token, keys)
         except:
-            pass
+            self.connected = False
+            return []
 
     def tell_waiting(self, offset, num, keys=None):
         time.sleep(wait_time)
         try:
             return self.server.aria2.tellWaiting(self.token, offset, num, keys)
         except:
-            pass
+            self.connected = False
+            return []
 
     def tell_stopped(self, offset, num, keys=None):
         time.sleep(wait_time)
         try:
             return self.server.aria2.tellStopped(self.token, offset, num, keys)
         except:
-            pass
+            self.connected = False
+            return []
 
     def change_position(self, gid, pos, how):
         time.sleep(wait_time)
-        return self.server.aria2.changePosition(self.token, gid, pos, how)
+        try:
+            return self.server.aria2.changePosition(self.token, gid, pos, how)
+        except:
+            pass
 
     def change_uri(self, gid, fileIndex, delUris, addUris, position=None):
         time.sleep(wait_time)
@@ -173,11 +192,17 @@ class PyAria2(object):
 
     def purge_download_result(self):
         time.sleep(wait_time)
-        return self.server.aria2.purgeDownloadResult(self.token)
+        try:
+            return self.server.aria2.purgeDownloadResult(self.token)
+        except:
+            pass
 
     def remove_download_result(self, gid):
         time.sleep(wait_time)
-        return self.server.aria2.removeDownloadResult(self.token, gid)
+        try:
+            return self.server.aria2.removeDownloadResult(self.token, gid)
+        except:
+            pass
 
     def get_version(self):
         time.sleep(wait_time)

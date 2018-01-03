@@ -7,7 +7,7 @@ import sys
 import time
 
 from narnia.colorstr import add_cstr, init_colors
-from narnia.common import Config as c, Globals as g
+from narnia.common import Config as c, Globals as g, refresh_windows
 from narnia.common import Header, Status
 from narnia.download import Download
 from narnia.process import start_threads, thread_priority_data, thread_action
@@ -53,40 +53,6 @@ def create_downloads():
 def key_actions(key):
     """ actions based on key input """
 
-    def refresh_windows():
-        """ update window widths and refresh them """
-
-        g.tty['curr_h'], g.tty['curr_w'] = list(map(
-            int, os.popen('stty size', 'r').read().split()))
-
-        if g.num_downloads < g.tty['curr_h']:
-            g.start_idx = 0
-
-        c.widths.name = g.tty['curr_w'] - \
-            (c.widths.size + c.widths.status +
-             c.widths.progress + c.widths.percent +
-             c.widths.seeds_peers + c.widths.speed +
-             c.widths.eta)
-
-        g.header.update()
-
-        g.file_status.clear()
-        g.file_status.noutrefresh()
-        g.file_status = curses.newwin(1, g.tty['curr_w'], g.tty['curr_h'] - 2, 0)
-
-        g.pos_status.clear()
-        g.pos_status.noutrefresh()
-        g.pos_status = curses.newwin(1, 8, g.tty['curr_h'] - 1, g.tty['curr_w'] - 7)
-
-        g.status.win.clear()
-        g.status.win.noutrefresh()
-        g.status.update(g.status.data)
-
-        for i in range(g.start_idx, min(g.num_downloads, g.tty['curr_h'] - 3) + g.start_idx):
-            g.downloads[i].draw(i - g.start_idx + 1, True)
-        curses.doupdate()
-
-        g.timer_ui = (c.refresh_interval * 100) - 1
 
     def confirm_del():
         g.status.win.nodelay(False)
@@ -218,7 +184,7 @@ def main(screen):
 
     g.file_status = curses.newwin(1, g.tty['curr_w'], g.tty['curr_h'] - 2, 0)
     g.pos_status = curses.newwin(1, 8, g.tty['curr_h'] - 1, g.tty['curr_w'] - 7)
-    add_cstr(0, 0, '<status.b>  [top]</status.b>', g.pos_status)
+    add_cstr(0, 0, g.s_pos, g.pos_status)
     g.pos_status.noutrefresh()
 
     g.header.draw(True)
@@ -230,7 +196,6 @@ def main(screen):
     while True:
         if g.timer_ui == c.refresh_interval * 100:
             g.header.draw(False)
-
             create_downloads()
 
             if g.num_downloads != 0:
@@ -249,15 +214,26 @@ def main(screen):
 
                 g.curr_pos = g.downloads.index(g.focused)
                 if g.num_downloads == 1 or g.curr_pos == 0:
-                    s_pos = '[top]'
+                    g.s_pos = '[top]'
                 elif g.curr_pos + 1 == g.num_downloads:
-                    s_pos = '[bot]'
+                    g.s_pos = '[bot]'
                 else:
-                    s_pos = '[{:2}%]'.format(round(((g.curr_pos + 1) / g.num_downloads) * 100))
+                    g.s_pos = '[{:2}%]'.format(round(((g.curr_pos + 1) / g.num_downloads) * 100))
+
+                g.s_pos = '<status.b>  {}</status.b>'.format(g.s_pos)
 
                 g.pos_status.clear()
-                add_cstr(0, 0, '<status.b>  ' + s_pos + '</status.b>', g.pos_status)
+                add_cstr(0, 0, g.s_pos, g.pos_status)
                 g.pos_status.noutrefresh()
+            else:
+                file_status_data = ' ' * (g.tty['curr_w'] - 1)
+                add_cstr(0, 0, file_status_data, g.file_status)
+                g.file_status.noutrefresh()
+
+                g.pos_status.clear()
+                add_cstr(0, 0, g.s_pos, g.pos_status)
+                g.pos_status.noutrefresh()
+
 
             g.status.draw(False)
 

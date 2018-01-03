@@ -12,11 +12,12 @@ from narnia.download import Download
 
 
 def request_data():
+    c.aria2.connected = True
+    g.status.refresh_data()
+
     active = c.aria2.tell_active()
     waiting = c.aria2.tell_waiting(0, 100)
     stopped = c.aria2.tell_stopped(-1, 100)
-
-    g.status.refresh_data()
     g.download_states = [active, waiting, stopped]
 
 

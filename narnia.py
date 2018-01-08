@@ -179,6 +179,12 @@ def main(screen):
 
     g.timer_ui = c.refresh_interval * 100
 
+    g.tty['curr_h'], g.tty['curr_w'] = list(map(
+        int, os.popen('stty size', 'r').read().split()))
+
+    g.tty['prev_h'] = g.tty['curr_h']
+    g.tty['prev_w'] = g.tty['curr_w']
+
     g.header = Header()
     g.status = Status()
 
@@ -187,6 +193,7 @@ def main(screen):
     add_cstr(0, 0, g.s_pos, g.pos_status)
     g.pos_status.noutrefresh()
 
+    refresh_windows()
     g.header.draw(True)
     g.status.draw(True)
 

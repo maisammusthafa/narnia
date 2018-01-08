@@ -14,13 +14,7 @@ from narnia.colorstr import add_cstr
 from datetime import datetime
 
 class Globals:
-    tty = {}
-    tty['curr_h'], tty['curr_w'] = list(map(
-        int, os.popen('stty size', 'r').read().split()))
-
-    tty['prev_h'] = tty['curr_h']
-    tty['prev_w'] = tty['curr_w']
-
+    tty = {'curr_h': 0, 'curr_w': 0, 'prev_h': 0, 'prev_w': 0}
     suffixes = [(1024 ** 3, ' G'), (1024 ** 2, ' M'), (1024, ' K'), (1, ' B')]
 
     header = None

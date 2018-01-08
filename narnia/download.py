@@ -47,7 +47,7 @@ class Download:
             self.changed = True
 
         self.data = data
-        self.url = self.data['files'][0]['uris'][0]['uri'].strip()
+        self.url = self.data['files'][0]['uris'][0]['uri'].strip() if not self.torrent else None
         self.name = self.data['bittorrent']['info']['name'] if self.torrent \
             else os.path.basename(self.data['files'][0]['path'])
         if self.name == '':

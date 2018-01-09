@@ -309,6 +309,7 @@ class Status:
 
 
     def draw(self, init):
+        # TODO: Evaluate the init logic here
         if not self.changed and not init:
             return
 

@@ -270,7 +270,7 @@ def main(screen):
                 g.pos_status.noutrefresh()
 
 
-            g.status.draw(False)
+            g.status.draw(True)
 
             g.tty['prev_h'] = g.tty['curr_h']
             g.tty['prev_w'] = g.tty['curr_w']

@@ -29,6 +29,7 @@ class Globals:
     timer_ui = 0
     queue = None
     s_pos = '<status.b>  [top]</status.b>'
+    s_textbox = ''
 
     def log(message):
         with open('log.txt', 'a') as log_file:

@@ -2,6 +2,7 @@
 """ narnia """
 
 import curses
+import curses.textpad
 import os
 import sys
 import time
@@ -132,13 +133,40 @@ def key_actions(key):
             nav_up()
 
     def add():
-        g.status.win.nodelay(False)
-        curses.echo(True)
-        add_cstr(0, 0, '<base3.b>add: </base3.b>' + ' ' * (int(g.tty['curr_w']) - 13), g.status.win)
-        url = g.status.win.getstr(0, 5, 200)
-        thread_action("c.aria2.add_uri([{}])".format(url.strip()))
-        curses.echo(False)
-        g.status.win.nodelay(True)
+        def tb_validator(char):
+            def refresh(txt):
+                g.s_textbox = txt
+                tb_win.clear()
+                tb_win.addstr(0, 0, g.s_textbox)
+                tb_win.refresh()
+
+            if char == 10:
+                return 7
+            elif char == 27:
+                refresh(g.s_textbox)
+                g.s_textbox = ''
+                return 7
+            elif char == 263:
+                refresh(g.s_textbox)
+                g.s_textbox = g.s_textbox[0:-1]
+                return 8
+            elif (char >= 258 and char <= 261) or char == 330:
+                return
+            elif char == 21:
+                refresh('')
+                return
+            refresh(g.s_textbox + chr(char))
+
+        prompt_win = curses.newwin(1, 6, g.tty['curr_h'] - 1, 0)
+        prompt_win.clear()
+        add_cstr(0, 0, '<base3.b>add: </base3.b>', prompt_win)
+        prompt_win.refresh()
+
+        g.s_textbox = ''
+        tb_win = curses.newwin(1, 512, g.tty['curr_h'] - 1, 5)
+        curses.textpad.Textbox(tb_win, insert_mode=True).edit(tb_validator)
+
+        thread_action("c.aria2.add_uri([\"{}\"])".format(g.s_textbox.strip()))
         g.status.draw(True)
 
     def none():

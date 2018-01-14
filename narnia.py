@@ -66,6 +66,7 @@ def key_actions(key):
         return True if response == ord('y') else False
 
     def nav_up():
+        # TODO: [BUG] Does not ALWAYS properly pan up
         y_pos = g.focused.win.getbegyx()[0]
         if g.num_downloads > g.tty['curr_h']:
             if g.focused == g.downloads[0]:
@@ -243,7 +244,11 @@ def main(screen):
                     g.downloads[i].draw(i - g.start_idx + 1, False)
 
                 file_status_data = '[{}] {}'.format(g.focused.gid, g.focused.name)
-                file_status_data += ' ' * (g.tty['curr_w'] - len(file_status_data) - 1)
+                if len(file_status_data) == g.tty['curr_w']:
+                    file_status_data = file_status_data[:-3] + '..'
+                else:
+                    file_status_data += ' ' * (g.tty['curr_w'] - len(file_status_data) - 1)
+
                 add_cstr(0, 0, file_status_data, g.file_status)
                 g.file_status.noutrefresh()
 
@@ -268,7 +273,6 @@ def main(screen):
                 g.pos_status.clear()
                 add_cstr(0, 0, g.s_pos, g.pos_status)
                 g.pos_status.noutrefresh()
-
 
             g.status.draw(True)
 

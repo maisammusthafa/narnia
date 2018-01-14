@@ -244,8 +244,8 @@ def main(screen):
                     g.downloads[i].draw(i - g.start_idx + 1, False)
 
                 file_status_data = '[{}] {}'.format(g.focused.gid, g.focused.name)
-                if len(file_status_data) == g.tty['curr_w']:
-                    file_status_data = file_status_data[:-3] + '..'
+                if len(file_status_data) >= g.tty['curr_w']:
+                    file_status_data = file_status_data[:-(len(file_status_data) - g.tty['curr_w'] + 3)] + '..'
                 else:
                     file_status_data += ' ' * (g.tty['curr_w'] - len(file_status_data) - 1)
 

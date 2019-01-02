@@ -264,9 +264,8 @@ class Status:
         try:
             if self.version == '0.00.0':
                 self.version = c.aria2.get_version()['version']
-            data = c.aria2.get_global_stat()
+            self.data = c.aria2.get_global_stat()
         except:
-            data = self.data
             self.version = '0.00.0'
             c.aria2.connected = False
 

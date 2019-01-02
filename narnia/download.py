@@ -9,7 +9,7 @@ import urllib.request
 
 from narnia.colorstr import add_cstr
 from narnia.common import Config as c, Globals as g
-from narnia.common import create_row
+from narnia.common import create_row, format_size
 
 
 class Download:
@@ -99,18 +99,7 @@ class Download:
 
         d_name = tree_node + self.name
 
-        size = 0
-        for item in g.suffixes:
-            if self.size >= item[0]:
-                size = self.size / item[0]
-                if size > 999 and size < 1024:
-                    size /= 1024
-                    suffix = g.suffixes[g.suffixes.index(item) - 1][1]
-                    break
-                suffix = item[1]
-                break
-            suffix = item[1]
-        d_size = str("%0.1f" % size) + suffix
+        d_size = format_size(self.size, ' ')
 
         d_status = self.status
 
@@ -128,9 +117,10 @@ class Download:
         d_sp = str(self.seeds) + "/" + str(self.peers)
         d_sp = re.sub('0/0', '-', d_sp)
 
-        d_speed = str("%0.0f" % (self.dl_speed / 1024)) + "K / " + \
-            str("%0.0f" % (self.ul_speed / 1024)) + "K"
-        d_speed = re.sub(' / 0K', '', (re.sub('^0K', '-', d_speed)))
+        du_speed = format_size(self.dl_speed) + " / " + \
+            format_size(self.ul_speed)
+
+        du_speed = re.sub(' / 0.0B', '', (re.sub('^0.0B', '-', du_speed)))
 
         if self.eta != -1:
             eta_s = (self.size - self.done) / self.dl_speed
@@ -147,7 +137,7 @@ class Download:
             (d_progress, c.widths.progress, 1, 'right'),
             (d_percent, c.widths.percent, 3, 'right'),
             (d_sp, c.widths.seeds_peers, 3, 'left'),
-            (d_speed, c.widths.speed, 3, 'left'),
+            (du_speed, c.widths.speed, 3, 'left'),
             (d_eta, c.widths.eta, 1, 'left'))
 
     def draw(self, y_pos, resized):

@@ -15,7 +15,6 @@ from datetime import datetime
 
 class Globals:
     tty = {'curr_h': 0, 'curr_w': 0, 'prev_h': 0, 'prev_w': 0}
-    suffixes = [(1024 ** 3, ' G'), (1024 ** 2, ' M'), (1024, ' K'), (1, ' B')]
 
     header = None
     status = None
@@ -121,7 +120,7 @@ class Widths:
         self.progress = interface.getint('width-progress', 15)
         self.percent = interface.getint('width-percent', 10)
         self.seeds_peers = interface.getint('width-seeds-peers', 10)
-        self.speed = interface.getint('width-speed', 16)
+        self.speed = interface.getint('width-speed', 20)
         self.eta = interface.getint('width-eta', 10)
         self.name = g.tty['curr_w'] - \
             (self.size + self.status + self.progress +
@@ -190,6 +189,24 @@ class Config:
 
 
 c = Config
+
+
+def format_size(raw_size, spacing=''):
+    suffixes = [(1024 ** 3, 'G'), (1024 ** 2, 'M'), (1024, 'K'), (1, 'B')]
+    size = 0
+
+    for item in suffixes:
+        if raw_size >= item[0]:
+            size = raw_size / item[0]
+            if size > 999 and size < 1024:
+                size /= 1024
+                suffix = suffixes[suffixes.index(item) - 1][1]
+                break
+            suffix = item[1]
+            break
+        suffix = item[1]
+
+    return str("%0.1f" % size) + spacing + suffix
 
 
 def create_row(*fields):
@@ -271,18 +288,15 @@ class Status:
 
 
     def create_string(self):
-        s_server = 'server: {}:{} v({})'.format(c.server, c.port, self.version)
+        s_server = 'server: {}:{} (v{})'.format(c.server, c.port, self.version)
 
         num_downloads = int(self.data['numActive']) + \
             int(self.data['numWaiting']) + int(self.data['numStopped'])
         s_downloads = 'downloads: ' + self.data['numStopped'] + \
             '/' + str(num_downloads)
 
-        dl_global = int(self.data['downloadSpeed'])
-        ul_global = int(self.data['uploadSpeed'])
-
-        s_speed = 'D/U: ' + str("%0.0f" % (dl_global / 1024)) + 'K / ' + \
-            str("%0.0f" % (ul_global / 1024)) + 'K'
+        s_speed = 'D/U: ' + format_size(int(self.data['downloadSpeed'])) + ' / ' + \
+            format_size(int(self.data['uploadSpeed']))
 
         self.string = create_row(
             (s_server, g.tty['curr_w'] - 21 - 20 - 7, 3, 'right'),

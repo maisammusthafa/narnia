@@ -9,7 +9,7 @@ import urllib.request
 
 from narnia.colorstr import add_cstr
 from narnia.common import Config as c, Globals as g
-from narnia.common import create_row, format_size
+from narnia.common import create_row, format_size, format_time
 
 
 class Download:
@@ -117,16 +117,14 @@ class Download:
         d_sp = str(self.seeds) + "/" + str(self.peers)
         d_sp = re.sub('0/0', '-', d_sp)
 
-        du_speed = format_size(self.dl_speed) + " / " + \
+        du_speed = format_size(self.dl_speed) + "/" + \
             format_size(self.ul_speed)
 
-        du_speed = re.sub(' / 0.0B', '', (re.sub('^0.0B', '-', du_speed)))
+        du_speed = re.sub('/0B', '', (re.sub('^0B', '-', du_speed)))
 
         if self.eta != -1:
             eta_s = (self.size - self.done) / self.dl_speed
-            mins, secs = divmod(eta_s, 60)
-            hrs, mins = divmod(mins, 60)
-            d_eta = "%d:%02d:%02d" % (hrs, mins, secs)
+            d_eta = format_time(eta_s)
         else:
             d_eta = "-"
 

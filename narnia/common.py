@@ -6,6 +6,7 @@ import configparser
 import curses
 import io
 import os
+import re
 import sys
 
 import narnia.pyaria2 as pyaria2
@@ -120,8 +121,8 @@ class Widths:
         self.progress = interface.getint('width-progress', 15)
         self.percent = interface.getint('width-percent', 10)
         self.seeds_peers = interface.getint('width-seeds-peers', 10)
-        self.speed = interface.getint('width-speed', 20)
-        self.eta = interface.getint('width-eta', 10)
+        self.speed = interface.getint('width-speed', 14)
+        self.eta = interface.getint('width-eta', 12)
         self.name = g.tty['curr_w'] - \
             (self.size + self.status + self.progress +
              self.percent + self.seeds_peers +
@@ -206,7 +207,24 @@ def format_size(raw_size, spacing=''):
             break
         suffix = item[1]
 
-    return str("%0.1f" % size) + spacing + suffix
+    rounding = "%0.0f" if any(x in suffix for x in ['K', 'B']) else "%0.1f"
+
+    return str(rounding % size) + spacing + suffix
+
+
+def format_time(eta_s):
+    mins, secs = divmod(eta_s, 60)
+    hrs, mins = divmod(mins, 60)
+    days, hrs = divmod(hrs, 24)
+
+    if days > 0:
+        d_eta = "%dd %dh %dm" % (days, hrs, mins)
+    else:
+        d_eta = "%dh %dm %ds" % (hrs, mins, secs)
+
+    d_eta = re.sub(r'(^0\w)|(\s0\w)', '', d_eta).strip()
+
+    return d_eta
 
 
 def create_row(*fields):
@@ -295,14 +313,14 @@ class Status:
         s_downloads = 'downloads: ' + self.data['numStopped'] + \
             '/' + str(num_downloads)
 
-        s_speed = 'D/U: ' + format_size(int(self.data['downloadSpeed'])) + ' / ' + \
+        s_speed = 'D/U: ' + format_size(int(self.data['downloadSpeed'])) + '/' + \
             format_size(int(self.data['uploadSpeed']))
 
         self.string = create_row(
-            (s_server, g.tty['curr_w'] - 21 - 20 - 7, 3, 'right'),
+            (s_server, g.tty['curr_w'] - 21 - 14 - 7, 3, 'right'),
             (s_downloads, 21, 3, 'right'),
-            (s_speed, 20, 1, 'left')
-            )
+            (s_speed, 14, 1, 'left')
+        )
 
     def update(self, data):
         """ generate status """

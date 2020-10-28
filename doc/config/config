@@ -11,8 +11,8 @@ width-status=11
 width-progress=15
 width-percent=10
 width-seeds-peers=10
-width-speed=16
-width-eta=10
+width-speed=14
+width-eta=12
 
 [Colors]
 colors=True

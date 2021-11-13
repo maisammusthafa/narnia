@@ -1,74 +1,44 @@
-# Project Title
+# narnia
 
-One Paragraph of project description goes here
-
-## Getting Started
-
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
+A curses-based console client for aria2 download manager, written in Python.
 
 ### Prerequisites
 
-What things you need to install the software and how to install them
+[aria2](https://aria2.github.io/) must be installed and configured properly. Refer to aria2's documentation on how to get started.
+
+### Building & Installing
+
+Clone the repo to your local machine and cd into the folder.
 
 ```
-Give examples
+git clone https://github.com/maisammusthafa/narnia.git
+cd narnia
 ```
 
-### Installing
-
-A step by step series of examples that tell you have to get a development env running
-
-Say what the step will be
+Build the client manually. Executable script can be found in `build/scripts-3.x/narnia`.
 
 ```
-Give the example
+python setup.py build
 ```
 
-And repeat
+For Arch Linux, a PKGBUILD and Makefile is provided to build and install using the package manager.
 
 ```
-until finished
+make install
 ```
 
-End with an example of getting some data out of the system or using it for a little demo
+### Configuring
 
-## Running the tests
+narnia must be configured properly before running. Copy the default [config](https://github.com/maisammusthafa/narnia/blob/narnia2/doc/config/config) and [profiles](https://github.com/maisammusthafa/narnia/blob/narnia2/doc/config/profiles) to `~/.config/narnia/`, and configure accordingly.
 
-Explain how to run the automated tests for this system
+### Running
 
-### Break down into end to end tests
-
-Explain what these tests test and why
+Can be run directly from the executable script, or `narnia` if installed on the system. For available command-line options, run with the help flag.
 
 ```
-Give an example
+narnia --help
 ```
-
-### And coding style tests
-
-Explain what these tests test and why
-
-```
-Give an example
-```
-
-## Contributing
-
-Please read [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c63ec426) for details on our code of conduct, and the process for submitting pull requests to us.
-
-## Authors
-
-* **Billie Thompson** - *Initial work* - [PurpleBooth](https://github.com/PurpleBooth)
-
-See also the list of [contributors](https://github.com/your/project/contributors) who participated in this project.
 
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
-
-## Acknowledgments
-
-* Hat tip to anyone who's code was used
-* Inspiration
-* etc
-

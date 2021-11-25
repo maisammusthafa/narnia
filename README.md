@@ -2,6 +2,8 @@
 
 A curses-based console client for aria2 download manager, written in Python.
 
+![screenshot](/screenshot.png?raw=true)
+
 ### Prerequisites
 
 [aria2](https://aria2.github.io/) must be installed and configured properly. Refer to aria2's documentation on how to get started.
